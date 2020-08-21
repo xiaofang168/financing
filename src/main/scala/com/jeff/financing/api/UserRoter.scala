@@ -1,22 +1,18 @@
 package com.jeff.financing.api
 
-
-import akka.actor.{ActorRef, Props}
 import akka.http.scaladsl.server.Directives._
-import akka.pattern.ask
-import com.jeff.financing.BootStart._
-import com.jeff.financing.action.UserAction
-import com.jeff.financing.actor.UserActor
+import com.jeff.financing.entity.UserJsonSupport._
+import com.jeff.financing.service.UserService
 
-object UserRoter {
+import scala.util.{Failure, Success}
 
-  val userActor: ActorRef = system.actorOf(Props[UserActor], "financing-user")
+object UserRoter extends UserService {
 
   val route =
     path("users" / Remaining) { id =>
-      complete {
-        // complete with serialized Future result
-        (userActor ? UserAction.Get(id)).map(_.toString)
+      onComplete(get(id)) {
+        case Success(value) => complete(value)
+        case Failure(ex) => complete(s"An error occurred: ${ex.getMessage}")
       }
     }
 
