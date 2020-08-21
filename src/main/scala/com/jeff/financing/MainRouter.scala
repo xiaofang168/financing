@@ -1,8 +1,16 @@
 package com.jeff.financing
 
-import com.jeff.financing.api.IndexRoter
+import akka.http.scaladsl.server.Directives._
+import akka.http.scaladsl.server.Route
+import com.jeff.financing.api.{IndexRoter, UserRoter}
 
 object MainRouter {
-  val routes = IndexRoter.route
+
+  lazy val topLevelRoute: Route =
+    concat(
+      pathPrefix("financing")(IndexRoter.route),
+      pathPrefix("financing")(UserRoter.route)
+    )
+
 }
 

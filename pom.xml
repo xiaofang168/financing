@@ -36,7 +36,6 @@
             <groupId>org.reactivemongo</groupId>
             <artifactId>reactivemongo_${scala.binary.version}</artifactId>
             <version>1.0.0-noshaded-rc.3</version>
-            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>com.typesafe.akka</groupId>
@@ -116,7 +115,7 @@
                     </descriptorRefs>
                     <archive>
                         <manifest>
-                            <mainClass>App</mainClass>
+                            <mainClass>com.jeff.financing.BootStart</mainClass>
                         </manifest>
                     </archive>
                 </configuration>

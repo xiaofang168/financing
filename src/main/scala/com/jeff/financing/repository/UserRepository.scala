@@ -1,12 +1,12 @@
 package com.jeff.financing.repository
 
+import com.jeff.financing.entity.User
 import reactivemongo.api.Cursor
 import reactivemongo.api.bson.{BSONDocument, BSONDocumentReader, BSONDocumentWriter, BSONObjectID, Macros, document}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-case class User(name: String, sex: Int, age: Int)
 
 object UserRepository extends MongoExecutor {
 
@@ -25,6 +25,13 @@ object UserRepository extends MongoExecutor {
     )
     exec(coll => {
       coll.update.one(selector, user, true).map(_.n)
+    })
+  }
+
+  def get(id: String): Future[Option[User]] = {
+    val query = document("_id" -> BSONObjectID.parse(id).get)
+    exec(coll => {
+      coll.find(query, Option.empty[BSONDocument]).one[User]
     })
   }
 
