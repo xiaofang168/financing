@@ -9,6 +9,7 @@ import com.jeff.financing.enums.Category.Category
  * @param id
  * @param platform   平台
  * @param category   类别 [[com.jeff.financing.enums.Category]]
+ * @param state      状态 (1存入,0取出)
  * @param amount     金额(单位元)
  * @param rate       利率
  * @param desc       备注/描述
@@ -17,5 +18,5 @@ import com.jeff.financing.enums.Category.Category
  * @param createTime 创建时间
  */
 case class Flow(id: Option[String], platform: Option[String], category: Category,
-                amount: Double, rate: Double, desc: Option[String],
+                state: Int, amount: Double, rate: Double, desc: Option[String],
                 startTime: Option[Long], endTime: Option[Long], createTime: Option[Long])
