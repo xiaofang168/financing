@@ -2,11 +2,11 @@ package com.jeff.financing.api
 
 import akka.http.scaladsl.server.Directives._
 import com.jeff.financing.entity.AccountJsonSupport._
-import com.jeff.financing.service.UserService
+import com.jeff.financing.service.AccountService
 
 import scala.util.{Failure, Success}
 
-object AccountRoter extends UserService {
+object AccountRoter extends AccountService {
 
   val route =
     path("accounts" / Remaining) { id =>
