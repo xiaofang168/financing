@@ -6,7 +6,7 @@ import com.jeff.financing.service.AccountService
 
 import scala.util.{Failure, Success}
 
-object AccountRoter extends AccountService {
+object AccountRouter extends AccountService {
 
   val route =
     path("accounts" / Remaining) { id =>
