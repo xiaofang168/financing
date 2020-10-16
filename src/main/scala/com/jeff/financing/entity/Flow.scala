@@ -11,19 +11,20 @@ import spray.json.{DeserializationException, JsString, JsValue, RootJsonFormat}
  * 流水
  *
  * @param _id
- * @param platform   平台
- * @param category   类别 [[com.jeff.financing.enums.Category]]
- * @param state      状态 (1存入,0取出)
- * @param amount     金额(单位元)
- * @param rate       利率
- * @param target     标的
- * @param startTime  开始时间
- * @param endTime    到期时间
- * @param createTime 创建时间
+ * @param platform    平台
+ * @param category    类别 [[com.jeff.financing.enums.Category]]
+ * @param state       状态 (1存入,0取出)
+ * @param amount      金额(单位元)
+ * @param rate        利率
+ * @param dailyIncome 每日收益
+ * @param target      标的
+ * @param startTime   开始时间
+ * @param endTime     到期时间
+ * @param createTime  创建时间
  */
 case class Flow(_id: Option[BSONObjectID], platform: Option[String], category: Category,
-                state: Int, amount: Float, rate: Option[Float], target: String,
-                startTime: Option[Long], endTime: Option[Long], createTime: Long)
+                state: Int, amount: Float, rate: Option[Float], dailyIncome: Option[Float],
+                target: String, startTime: Option[Long], endTime: Option[Long], createTime: Long)
 
 
 object FlowJsonSupport extends ObjectIdSerialization with SprayJsonSupport {
@@ -43,5 +44,5 @@ object FlowJsonSupport extends ObjectIdSerialization with SprayJsonSupport {
     }
   }
 
-  implicit val flowFormats = jsonFormat10(Flow)
+  implicit val flowFormats = jsonFormat11(Flow)
 }

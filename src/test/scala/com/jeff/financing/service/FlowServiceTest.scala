@@ -12,10 +12,10 @@ class FlowServiceTest {
 
   @Test
   def list(): Unit = {
-    val flows = List(Flow(None, Some("蚂蚁财富"), Category.STOCK_FUND, 1, 1000, Some(0.045F),
+    val flows = List(Flow(None, Some("蚂蚁财富"), Category.STOCK_FUND, 1, 1000, Some(0.045F), None,
       "新华轮换混合", Some(DateTime.parse("2020-03-06", DateTimeFormat.forPattern("yyyy-MM-dd")).getMillis),
       Some(DateTime.parse("2020-09-06", DateTimeFormat.forPattern("yyyy-MM-dd")).getMillis), System.currentTimeMillis()),
-      Flow(None, Some("京东金融"), Category.SAVING, 1, 10000, Some(0.045F),
+      Flow(None, Some("京东金融"), Category.SAVING, 1, 10000, Some(0.045F), Some(2.5F),
         "中关村银行", Some(DateTime.parse("2020-03-06", DateTimeFormat.forPattern("yyyy-MM-dd")).getMillis),
         Some(DateTime.parse("2020-09-06", DateTimeFormat.forPattern("yyyy-MM-dd")).getMillis), System.currentTimeMillis()))
 
