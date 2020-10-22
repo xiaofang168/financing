@@ -23,7 +23,7 @@ import spray.json.{DeserializationException, JsString, JsValue, RootJsonFormat}
  * @param createTime  创建时间
  */
 case class Flow(_id: Option[BSONObjectID], platform: Option[String], category: Category,
-                state: Int, amount: Float, rate: Option[Float], dailyIncome: Option[Float],
+                state: Int, amount: BigDecimal, rate: Option[BigDecimal], dailyIncome: Option[BigDecimal],
                 target: String, startTime: Option[Long], endTime: Option[Long], createTime: Long)
 
 

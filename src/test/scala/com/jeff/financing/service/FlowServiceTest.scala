@@ -35,7 +35,7 @@ class FlowServiceTest {
   @Test
   def save(): Unit = {
     val flowService = new FlowService {}
-    val flow = Flow(None, Some("蚂蚁财富"), Category.STOCK_FUND, 1, 1000, Some(0.045F), None,
+    val flow = Flow(None, Some("蚂蚁财富"), Category.STOCK_FUND, 1, 1000, Some(0.045), None,
       "新华轮换混合", Some(DateTime.parse("2020-03-06", DateTimeFormat.forPattern("yyyy-MM-dd")).getMillis),
       Some(DateTime.parse("2020-09-06", DateTimeFormat.forPattern("yyyy-MM-dd")).getMillis), System.currentTimeMillis())
     val f = flowService.save(flow)
