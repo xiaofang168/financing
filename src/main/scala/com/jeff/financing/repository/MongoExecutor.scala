@@ -1,9 +1,9 @@
 package com.jeff.financing.repository
 
 import com.jeff.financing.repository.MongoExecutor.{customStrategy, db}
+import reactivemongo.api._
 import reactivemongo.api.bson.collection.BSONCollection
 import reactivemongo.api.bson.{BSONDocument, BSONDocumentReader, BSONDocumentWriter, BSONObjectID, document}
-import reactivemongo.api.{AsyncDriver, DB, FailoverStrategy, MongoConnection}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -14,7 +14,7 @@ trait MongoExecutor[T] {
 
   def getCollName(): String
 
-  def exec[T](fn: BSONCollection => Future[T]): Future[T] = {
+  protected def exec[T](fn: BSONCollection => Future[T]): Future[T] = {
     db.map(e => e.collection(getCollName(), customStrategy)).flatMap(fn(_))
   }
 
@@ -28,6 +28,15 @@ trait MongoExecutor[T] {
     val query = document("_id" -> BSONObjectID.parse(id).get)
     exec(coll => {
       coll.find(query, Option.empty[BSONDocument]).one[T]
+    })
+  }
+
+  def list(offset: Int, limit: Int)(implicit m: BSONDocumentReader[T]) = {
+    exec(coll => {
+      coll.find(document(), Option.empty[BSONDocument])
+        .skip(offset)
+        .cursor[T](ReadPreference.primary).
+        collect[Vector](limit, Cursor.FailOnError[Vector[T]]())
     })
   }
 

@@ -7,6 +7,9 @@ class CategoryTest {
   @Test
   def all(): Unit = {
     Category.values.foreach(println(_))
+    Category.values.foreach(e => {
+      println(Category.getDesc(e))
+    })
   }
 
   @Test

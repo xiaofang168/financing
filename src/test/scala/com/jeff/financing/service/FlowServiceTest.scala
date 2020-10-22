@@ -8,6 +8,10 @@ import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 import org.junit.Test
 
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.language.postfixOps
+import scala.util.{Failure, Success}
+
 class FlowServiceTest {
 
   @Test
@@ -28,5 +32,18 @@ class FlowServiceTest {
 
   }
 
+  @Test
+  def save(): Unit = {
+    val flowService = new FlowService {}
+    val flow = Flow(None, Some("蚂蚁财富"), Category.STOCK_FUND, 1, 1000, Some(0.045F), None,
+      "新华轮换混合", Some(DateTime.parse("2020-03-06", DateTimeFormat.forPattern("yyyy-MM-dd")).getMillis),
+      Some(DateTime.parse("2020-09-06", DateTimeFormat.forPattern("yyyy-MM-dd")).getMillis), System.currentTimeMillis())
+    val f = flowService.save(flow)
+    f onComplete {
+      case Success(value) => println(value)
+      case Failure(exception) => exception.printStackTrace()
+    }
+    Thread.sleep(5000)
+  }
 
 }
