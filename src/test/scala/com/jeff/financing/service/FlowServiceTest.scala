@@ -46,4 +46,15 @@ class FlowServiceTest {
     Thread.sleep(5000)
   }
 
+  @Test
+  def search(): Unit = {
+    val flowService = new FlowService {}
+    val f = flowService.list()
+    f onComplete {
+      case Success(value) => println(value)
+      case Failure(exception) => exception.printStackTrace()
+    }
+    Thread.sleep(5000)
+  }
+
 }

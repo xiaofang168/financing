@@ -9,7 +9,7 @@ object FlowRepository extends MongoExecutor[Flow] {
   override def getCollName(): String = "flow"
 
   def list(): Future[Vector[Flow]] = {
-    list(1, Int.MaxValue)
+    list(0, Int.MaxValue)
   }
 
 }

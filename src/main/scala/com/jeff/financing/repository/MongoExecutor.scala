@@ -34,6 +34,7 @@ trait MongoExecutor[T] {
   def list(offset: Int, limit: Int)(implicit m: BSONDocumentReader[T]) = {
     exec(coll => {
       coll.find(document(), Option.empty[BSONDocument])
+        .sort(document("endTime" -> 1))
         .skip(offset)
         .cursor[T](ReadPreference.primary).
         collect[Vector](limit, Cursor.FailOnError[Vector[T]]())

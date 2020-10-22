@@ -24,5 +24,5 @@ object BootStart extends App {
   lc.reset()
   configurator.doConfigure(getClass.getResource("/logback.xml"))
   StatusPrinter.printInCaseOfErrorsOrWarnings(lc)
-  Http().newServerAt("localhost", 8080).bind(MainRouter.topLevelRoute)
+  Http().newServerAt("localhost", 8088).bind(MainRouter.topLevelRoute)
 }
