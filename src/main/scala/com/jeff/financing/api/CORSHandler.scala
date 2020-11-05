@@ -13,10 +13,8 @@ trait CORSHandler {
   private val corsResponseHeaders = List(
     `Access-Control-Allow-Origin`.*,
     `Access-Control-Allow-Credentials`(true),
-    `Access-Control-Allow-Headers`("Authorization",
-      "Content-Type", "X-Requested-With"),
-    `Access-Control-Max-Age`(1.day.toMillis) //Tell browser to cache OPTIONS requests
-  )
+    `Access-Control-Allow-Headers`("Authorization", "Content-Type", "X-Requested-With"),
+    `Access-Control-Max-Age`(1.day.toMillis))
 
   //this directive adds access control headers to normal responses
   private def addAccessControlHeaders: Directive0 = {
