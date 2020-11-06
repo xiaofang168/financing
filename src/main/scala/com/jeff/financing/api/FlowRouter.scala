@@ -22,7 +22,7 @@ object FlowRouter {
             onComplete(flowService.save(command)) {
               case Success(value) => complete(Map("data" -> value))
               case Failure(ex) => complete(s"An error occurred: ${ex.getMessage}")
-            } gt
+            }
           }
         }
     } ~ path("flows" / Remaining) { id =>
