@@ -8,7 +8,7 @@ import scala.concurrent.Future
 
 trait AccountService {
 
-  def save(user: Account): Future[Unit] = {
+  def save(user: Account): Future[Boolean] = {
     AccountRepository.create(user)
   }
 

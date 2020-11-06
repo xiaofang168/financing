@@ -18,9 +18,9 @@ trait MongoExecutor[T] {
     db.map(e => e.collection(getCollName(), customStrategy)).flatMap(fn(_))
   }
 
-  def create(t: T)(implicit m: BSONDocumentWriter[T]): Future[Unit] = {
+  def create(t: T)(implicit m: BSONDocumentWriter[T]): Future[Boolean] = {
     exec(coll => {
-      coll.insert.one(t).map(_ => {})
+      coll.insert.one(t).map(_.n > 0)
     })
   }
 
