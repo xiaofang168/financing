@@ -4,9 +4,9 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import com.jeff.financing.internal.LowerCaseWithUnderscores
 
 case class CreateFlowCommand(platform: Option[String], category: String, state: String,
-                             amount: BigDecimal, rate: Option[BigDecimal], dailyIncome: Option[BigDecimal],
+                             amount: BigDecimal, rate: Option[BigDecimal],
                              target: String, startTime: Option[String], endTime: Option[String])
 
 object CreateFlowCommandJsonSupport extends LowerCaseWithUnderscores with SprayJsonSupport {
-  implicit val createFlowCommandFormats = jsonFormat9(CreateFlowCommand)
+  implicit val createFlowCommandFormats = jsonFormat8(CreateFlowCommand)
 }
