@@ -5,10 +5,11 @@ import com.jeff.financing.entity.Flow
 import com.jeff.financing.enums.Category
 import com.jeff.financing.repository.FlowRepository
 import com.jeff.financing.repository.PersistenceImplicits._
-import org.joda.time.DateTime
+import org.joda.time.{DateTime, Days}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import scala.math.BigDecimal.RoundingMode
 
 trait FlowService {
 
@@ -41,15 +42,26 @@ trait FlowService {
     }
   }
 
-  private def converter(e: Flow): FlowItem = {
-    val stateStr = if (e.state == 1) "存入" else "取出"
-    // 计算日收益
-    // 计算总收益
-    FlowItem(e._id.get.stringify, e.platform, Category.getDesc(e.category), stateStr,
-      e.amount, e.rate, None, None, e.target,
-      e.startTime.map(t => new DateTime(t).toString("yyyy-MM-dd")),
-      e.endTime.map(t => new DateTime(t).toString("yyyy-MM-dd")),
-      new DateTime(e.createTime).toString("yyyy-MM-dd"))
+  private def converter(flow: Flow): FlowItem = {
+    val stateStr = if (flow.state == 1) "存入" else "取出"
+
+    // 计算日收益和总收益
+    val dailyDaysALlIncome = flow.rate map { rate =>
+      // 计算总收益
+      val daysALlIncome = flow.startTime.map { startTime =>
+        // 经过的天数
+        val days = Days.daysBetween(new DateTime(startTime), DateTime.now()).getDays
+        (Some(days), Some((flow.amount * rate / 100 / 365 * days).setScale(4, RoundingMode.HALF_UP)))
+      }
+      // 日收益天数和总收益
+      (Some((flow.amount * rate / 100 / 365).setScale(4, RoundingMode.HALF_UP)), daysALlIncome.flatMap(e => e._1), daysALlIncome.flatMap(e => e._2))
+    }
+
+    FlowItem(flow._id.get.stringify, flow.platform, Category.getDesc(flow.category), stateStr, flow.amount, flow.rate,
+      dailyDaysALlIncome.flatMap(e => e._1), dailyDaysALlIncome.flatMap(e => e._2), dailyDaysALlIncome.flatMap(e => e._3),
+      flow.target, flow.startTime.map(t => new DateTime(t).toString("yyyy-MM-dd")),
+      flow.endTime.map(t => new DateTime(t).toString("yyyy-MM-dd")),
+      new DateTime(flow.createTime).toString("yyyy-MM-dd"))
   }
 
 }
