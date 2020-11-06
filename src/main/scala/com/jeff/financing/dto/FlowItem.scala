@@ -4,7 +4,7 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import com.jeff.financing.internal.LowerCaseWithUnderscores
 
 case class FlowItem(id: String, platform: Option[String], category: String,
-                    state: String, amount: BigDecimal, rate: Option[String], dailyIncome: Option[BigDecimal],
+                    state: String, amount: BigDecimal, rate: Option[BigDecimal], dailyIncome: Option[BigDecimal],
                     target: String, startTime: Option[String], endTime: Option[String], createTime: String)
 
 object FlowItemJsonSupport extends LowerCaseWithUnderscores with SprayJsonSupport {
