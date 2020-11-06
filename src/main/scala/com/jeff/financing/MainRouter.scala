@@ -9,13 +9,14 @@ object MainRouter {
   /**
    * 根路径
    */
-  val ROOT_PATH = "financing";
+  val ROOT_PATH = "financing"
+  val API_PATH = "api";
   lazy val topLevelRoute: Route =
-    concat(
-      pathPrefix(ROOT_PATH)(IndexRouter.route),
-      pathPrefix(ROOT_PATH)(AccountRouter.route),
-      pathPrefix(ROOT_PATH)(FlowRouter.route)
-    )
+    pathPrefix(ROOT_PATH) {
+      pathPrefix(API_PATH) {
+        IndexRouter.route ~ AccountRouter.route ~ FlowRouter.route
+      }
+    }
 
 }
 
