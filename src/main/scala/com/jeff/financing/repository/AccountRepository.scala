@@ -27,6 +27,4 @@ object AccountRepository extends MongoExecutor[Account] {
     })
   }
 
-  override def getCollName(): String = "account"
-
 }

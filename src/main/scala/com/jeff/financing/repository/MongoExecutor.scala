@@ -1,6 +1,8 @@
 package com.jeff.financing.repository
 
+import com.jeff.financing.entity.Persistence
 import com.jeff.financing.repository.MongoExecutor.{customStrategy, db}
+import org.reflections.Reflections
 import reactivemongo.api._
 import reactivemongo.api.bson.collection.BSONCollection
 import reactivemongo.api.bson.{BSONDocument, BSONDocumentReader, BSONDocumentWriter, BSONObjectID, document}
@@ -9,39 +11,57 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.language.postfixOps
+import scala.reflect.ClassTag
 
 trait MongoExecutor[T] {
 
-  def getCollName(): String
-
-  protected def exec[T](fn: BSONCollection => Future[T]): Future[T] = {
-    db.map(e => e.collection(getCollName(), customStrategy)).flatMap(fn(_))
+  protected def exec[A](fn: BSONCollection => Future[A])(implicit tag: ClassTag[T]): Future[A] = {
+    val collName = getCollName(tag.runtimeClass.getName)
+    db.map(e => e.collection(collName, customStrategy)).flatMap(fn(_))
   }
 
-  def create(t: T)(implicit m: BSONDocumentWriter[T]): Future[Boolean] = {
+  private def getCollName(className: String): String = {
+    import scala.collection.mutable
+    import scala.jdk.CollectionConverters._
+    val annotation = new Reflections(className).getTypesAnnotatedWith(classOf[Persistence])
+    val values: mutable.Set[Persistence] = annotation.asScala.map(e => e.getAnnotation(classOf[Persistence]))
+    values.head.collName()
+  }
+
+  def create(t: T)(implicit m: BSONDocumentWriter[T], tag: ClassTag[T]): Future[Boolean] = {
     exec(coll => {
       coll.insert.one(t).map(_.n > 0)
     })
   }
 
-  def get(id: String)(implicit m: BSONDocumentReader[T]): Future[Option[T]] = {
+  def get(id: String)(implicit m: BSONDocumentReader[T], tag: ClassTag[T]): Future[Option[T]] = {
     val query = document("_id" -> BSONObjectID.parse(id).get)
     exec(coll => {
       coll.find(query, Option.empty[BSONDocument]).one[T]
     })
   }
 
-  def list(offset: Int, limit: Int)(implicit m: BSONDocumentReader[T]) = {
+  def list(offset: Int, limit: Int, sortDoc: BSONDocument)(implicit m: BSONDocumentReader[T], tag: ClassTag[T]) = {
     exec(coll => {
       coll.find(document(), Option.empty[BSONDocument])
-        .sort(document("endTime" -> 1))
+        .sort(sortDoc)
         .skip(offset)
         .cursor[T](ReadPreference.primary).
         collect[Vector](limit, Cursor.FailOnError[Vector[T]]())
     })
   }
 
-  def update(id: String, t: T)(implicit m: BSONDocumentWriter[T]): Future[Int] = {
+  def list(offset: Int, limit: Int, findDoc: BSONDocument, sortDoc: BSONDocument)(implicit m: BSONDocumentReader[T], tag: ClassTag[T]) = {
+    exec(coll => {
+      coll.find(findDoc, Option.empty[BSONDocument])
+        .sort(sortDoc)
+        .skip(offset)
+        .cursor[T](ReadPreference.primary).
+        collect[Vector](limit, Cursor.FailOnError[Vector[T]]())
+    })
+  }
+
+  def update(id: String, t: T)(implicit m: BSONDocumentWriter[T], tag: ClassTag[T]): Future[Int] = {
     val selector = document("_id" -> BSONObjectID.parse(id).get)
     exec(coll => {
       coll.update.one(selector, t, true).map(_.n)
