@@ -21,6 +21,7 @@ import spray.json.{DeserializationException, JsString, JsValue, RootJsonFormat}
  * @param endTime    到期时间
  * @param createTime 创建时间
  */
+@Persistence(collName = "flow")
 case class Flow(_id: Option[BSONObjectID], platform: Option[String], category: Category,
                 state: Int, amount: BigDecimal, rate: Option[BigDecimal], target: String,
                 startTime: Option[Long], endTime: Option[Long], createTime: Long)
