@@ -3,8 +3,9 @@ package com.jeff.financing.service
 import com.jeff.financing.dto.CreateStocktakingCommand
 import com.jeff.financing.entity.Stocktaking
 import com.jeff.financing.repository.MongoExecutor
-import com.jeff.financing.repository.PersistenceImplicits.stocktakingWriter
+import com.jeff.financing.repository.PersistenceImplicits.{stocktakingWriter, _}
 import org.joda.time.DateTime
+import reactivemongo.api.bson.document
 
 trait StocktakingService extends MongoExecutor[Stocktaking] {
 
@@ -14,8 +15,8 @@ trait StocktakingService extends MongoExecutor[Stocktaking] {
     create(stocktaking)
   }
 
-  //def list(targetId: String) = {
-  // list(0, Int.MaxValue, document("targetId" -> targetId), document("createTime" -> -1))
-  // }
+  def find(targetId: String) = {
+    list(0, Int.MaxValue, document("targetId" -> targetId), document("createTime" -> -1))
+  }
 
 }
