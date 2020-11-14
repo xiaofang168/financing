@@ -41,17 +41,11 @@ trait MongoExecutor[T] {
     })
   }
 
-  def list(offset: Int, limit: Int, sortDoc: BSONDocument)(implicit m: BSONDocumentReader[T], tag: ClassTag[T]) = {
-    exec(coll => {
-      coll.find(document(), Option.empty[BSONDocument])
-        .sort(sortDoc)
-        .skip(offset)
-        .cursor[T](ReadPreference.primary).
-        collect[Vector](limit, Cursor.FailOnError[Vector[T]]())
-    })
+  def list(offset: Int, limit: Int, sortDoc: BSONDocument)(implicit m: BSONDocumentReader[T], tag: ClassTag[T]): Future[Vector[T]] = {
+    this.list(offset, limit, document, sortDoc)
   }
 
-  def list(offset: Int, limit: Int, findDoc: BSONDocument, sortDoc: BSONDocument)(implicit m: BSONDocumentReader[T], tag: ClassTag[T]) = {
+  def list(offset: Int, limit: Int, findDoc: BSONDocument, sortDoc: BSONDocument)(implicit m: BSONDocumentReader[T], tag: ClassTag[T]): Future[Vector[T]] = {
     exec(coll => {
       coll.find(findDoc, Option.empty[BSONDocument])
         .sort(sortDoc)
