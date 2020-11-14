@@ -7,19 +7,14 @@ import com.jeff.financing.repository.FlowRepository
 import com.jeff.financing.repository.PersistenceImplicits._
 import org.joda.time.{DateTime, Days}
 
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.math.BigDecimal.RoundingMode
 
-trait FlowService {
+trait FlowService extends DataConverter[Flow, FlowItem] {
 
   def list(): Future[Vector[FlowItem]] = {
     val future: Future[Vector[Flow]] = FlowRepository.list()
-    for {
-      result <- future
-    } yield {
-      result.map(converter(_))
-    }
+    super.convert2Vector(future, converter(_))
   }
 
   def save(command: CreateFlowCommand) = {
@@ -35,11 +30,7 @@ trait FlowService {
 
   def get(id: String): Future[Option[FlowItem]] = {
     val future = FlowRepository.get(id)
-    for {
-      result <- future
-    } yield {
-      result.map(converter(_))
-    }
+    super.convert2Obj(future, converter(_))
   }
 
   private def converter(flow: Flow): FlowItem = {
