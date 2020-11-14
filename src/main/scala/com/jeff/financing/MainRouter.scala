@@ -2,7 +2,7 @@ package com.jeff.financing
 
 import akka.http.scaladsl.server.Directives.{pathPrefix, _}
 import akka.http.scaladsl.server.Route
-import com.jeff.financing.api.{AccountRouter, FlowRouter, IndexRouter}
+import com.jeff.financing.api.{AccountRouter, FlowRouter, IndexRouter, StocktakingRouter}
 
 object MainRouter {
 
@@ -14,7 +14,7 @@ object MainRouter {
   lazy val topLevelRoute: Route =
     pathPrefix(ROOT_PATH) {
       pathPrefix(API_PATH) {
-        IndexRouter.route ~ AccountRouter.route ~ FlowRouter.route
+        IndexRouter.route ~ AccountRouter.route ~ FlowRouter.route ~ StocktakingRouter.route
       }
     }
 
