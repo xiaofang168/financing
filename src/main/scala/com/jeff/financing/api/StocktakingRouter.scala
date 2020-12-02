@@ -12,13 +12,12 @@ object StocktakingRouter {
   val route =
     path("stocktaking") {
       get {
+        parameters("target_id") { targetId =>
+          complete(stocktakingService.find(targetId))
+        }
+      } ~ get {
         complete(stocktakingService.find())
       } ~
-        get {
-          parameters("target_id") { targetId =>
-            complete(stocktakingService.find(targetId))
-          }
-        } ~
         post {
           import com.jeff.financing.dto.CreateStocktakingJsonSupport._
           entity(as[CreateStocktakingCommand]) { createStocktakingCommand =>
