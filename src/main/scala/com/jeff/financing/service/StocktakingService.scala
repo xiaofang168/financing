@@ -18,12 +18,12 @@ trait StocktakingService extends MongoExecutor[Stocktaking] with DataConverter[S
   }
 
   def find(): Future[Vector[StocktakingItem]] = {
-    val future = list(0, Int.MaxValue, document("createTime" -> -1))
+    val future = list(0, Int.MaxValue, document("date" -> -1))
     super.convert2Vector(future, this.convert)
   }
 
   def find(targetId: String): Future[Vector[StocktakingItem]] = {
-    val future = list(0, Int.MaxValue, document("targetId" -> targetId), document("createTime" -> -1))
+    val future = list(0, Int.MaxValue, document("targetId" -> targetId), document("date" -> -1))
     super.convert2Vector(future, this.convert)
   }
 
@@ -33,7 +33,7 @@ trait StocktakingService extends MongoExecutor[Stocktaking] with DataConverter[S
 
   val convert: Stocktaking => StocktakingItem = stocktaking => {
     val date = new DateTime(stocktaking.date).toString("yyyy-MM-dd")
-    StocktakingItem(stocktaking._id.get.stringify, date, stocktaking.amount, stocktaking.comment)
+    StocktakingItem(stocktaking.targetId, stocktaking._id.get.stringify, date, stocktaking.amount, stocktaking.comment)
   }
 
 }
