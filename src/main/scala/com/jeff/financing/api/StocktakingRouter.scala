@@ -12,11 +12,13 @@ object StocktakingRouter {
   val route =
     path("stocktaking") {
       get {
-        parameters("target_id") { targetId =>
-          complete(stocktakingService.find(targetId))
+        parameters("target_id".optional) { targetId: Option[String] =>
+          if (targetId.isEmpty) {
+            complete(stocktakingService.find())
+          } else {
+            complete(stocktakingService.find(targetId.get))
+          }
         }
-      } ~ get {
-        complete(stocktakingService.find())
       } ~
         post {
           import com.jeff.financing.dto.CreateStocktakingJsonSupport._
