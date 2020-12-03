@@ -10,7 +10,6 @@ import scala.util.{Failure, Success}
 
 object FlowRouter {
   val flowService = new FlowService {}
-
   val route =
     path("flows") {
       get {
@@ -26,7 +25,18 @@ object FlowRouter {
           }
         }
     } ~ path("flows" / Remaining) { id =>
-      complete(flowService.get(id))
+      get {
+        complete(flowService.get(id))
+      } ~
+        put {
+          import com.jeff.financing.dto.CreateFlowCommandJsonSupport._
+          entity(as[CreateFlowCommand]) { command =>
+            onComplete(flowService.update(id, command)) {
+              case Success(value) => complete(Map("data" -> value))
+              case Failure(ex) => complete(s"An error occurred: ${ex.getMessage}")
+            }
+          }
+        }
     }
 
 }

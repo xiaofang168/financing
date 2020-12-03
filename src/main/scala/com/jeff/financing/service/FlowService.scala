@@ -3,14 +3,15 @@ package com.jeff.financing.service
 import com.jeff.financing.dto.{CreateFlowCommand, FlowItem}
 import com.jeff.financing.entity.Flow
 import com.jeff.financing.enums.Category
-import com.jeff.financing.repository.FlowRepository
 import com.jeff.financing.repository.PersistenceImplicits._
+import com.jeff.financing.repository.{FlowRepository, MongoExecutor}
 import org.joda.time.{DateTime, Days}
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.math.BigDecimal.RoundingMode
 
-trait FlowService extends DataConverter[Flow, FlowItem] {
+trait FlowService extends MongoExecutor[Flow] with DataConverter[Flow, FlowItem] {
 
   def list(): Future[Vector[FlowItem]] = {
     val future: Future[Vector[Flow]] = FlowRepository.list()
@@ -22,6 +23,26 @@ trait FlowService extends DataConverter[Flow, FlowItem] {
       command.rate, command.target, command.startTime.map(e => new DateTime(e).getMillis),
       command.endTime.map(e => new DateTime(e).getMillis), System.currentTimeMillis())
     FlowRepository.create(flow)
+  }
+
+  def update(id: String, command: CreateFlowCommand): Future[Int] = {
+    val obj = FlowRepository.get(id)
+    for {
+      result <- obj
+      out <- {
+        if (result.isEmpty) {
+          Future(0)
+        } else {
+          val obj = result.get
+          val flow = Flow(obj._id, command.platform, Category.withName(command.category), command.state.toInt, command.amount,
+            command.rate, command.target, command.startTime.map(e => new DateTime(e).getMillis),
+            command.endTime.map(e => new DateTime(e).getMillis), obj.createTime)
+          super.update(id, flow)
+        }
+      }
+    } yield {
+      out
+    }
   }
 
   def save(flow: Flow) = {
