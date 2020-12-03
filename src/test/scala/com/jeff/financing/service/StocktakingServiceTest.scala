@@ -20,4 +20,15 @@ class StocktakingServiceTest {
     Thread.sleep(5000)
   }
 
+  @Test
+  def delById(): Unit = {
+    val stocktakingService = new StocktakingService {}
+    val f = stocktakingService.delById("5faf475f5259308b1195463d")
+    f onComplete {
+      case Success(value) => println(value)
+      case Failure(exception) => exception.printStackTrace()
+    }
+    Thread.sleep(5000)
+  }
+
 }

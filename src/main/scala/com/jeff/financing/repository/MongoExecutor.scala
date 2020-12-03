@@ -61,6 +61,14 @@ trait MongoExecutor[T] {
       coll.update.one(selector, t, true).map(_.n)
     })
   }
+
+  def delete(id: String)(implicit m: BSONDocumentWriter[T], tag: ClassTag[T]): Future[Int] = {
+    val selector = document("_id" -> BSONObjectID.parse(id).get)
+    exec(coll => {
+      coll.delete.one(selector).map(_.n)
+    })
+  }
+
 }
 
 object MongoExecutor {

@@ -30,7 +30,21 @@ object StocktakingRouter {
           }
         }
     } ~ path("stocktaking" / Remaining) { id =>
-      complete(stocktakingService.getById(id))
+      delete {
+        onComplete(stocktakingService.delById(id)) {
+          case Success(value) => complete(Map("data" -> value))
+          case Failure(ex) => complete(s"删除盘点出错: ${ex.getMessage}")
+        }
+      } ~
+        put {
+          import com.jeff.financing.dto.CreateStocktakingJsonSupport._
+          entity(as[CreateStocktakingCommand]) { command =>
+            onComplete(stocktakingService.update(id, command)) {
+              case Success(value) => complete(Map("data" -> value))
+              case Failure(ex) => complete(s"修改盘点出错: ${ex.getMessage}")
+            }
+          }
+        }
     }
 
 }

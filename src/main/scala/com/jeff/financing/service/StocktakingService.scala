@@ -7,6 +7,7 @@ import com.jeff.financing.repository.PersistenceImplicits.{stocktakingWriter, _}
 import org.joda.time.DateTime
 import reactivemongo.api.bson.document
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 trait StocktakingService extends MongoExecutor[Stocktaking] with DataConverter[Stocktaking, StocktakingItem] {
@@ -15,6 +16,25 @@ trait StocktakingService extends MongoExecutor[Stocktaking] with DataConverter[S
     val date = DateTime.parse(command.date).getMillis
     val stocktaking = Stocktaking(None, command.targetId, date, command.amount, command.comment, System.currentTimeMillis)
     create(stocktaking)
+  }
+
+  def update(id: String, command: CreateStocktakingCommand): Future[Int] = {
+    val obj = get(id)
+    for {
+      result <- obj
+      out <- {
+        if (result.isEmpty) {
+          Future(0)
+        } else {
+          val obj = result.get
+          val date = DateTime.parse(command.date).getMillis
+          val u = Stocktaking(obj._id, obj.targetId, date, command.amount, command.comment, obj.createTime)
+          super.update(id, u)
+        }
+      }
+    } yield {
+      out
+    }
   }
 
   def find(): Future[Vector[StocktakingItem]] = {
@@ -29,6 +49,10 @@ trait StocktakingService extends MongoExecutor[Stocktaking] with DataConverter[S
 
   def getById(id: String) = {
     super.convert2Obj(super.get(id), convert)
+  }
+
+  def delById(id: String) = {
+    super.delete(id)
   }
 
   val convert: Stocktaking => StocktakingItem = stocktaking => {
