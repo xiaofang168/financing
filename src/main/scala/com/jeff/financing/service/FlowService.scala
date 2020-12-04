@@ -69,8 +69,9 @@ trait FlowService extends MongoExecutor[Flow] with DataConverter[Flow, FlowItem]
       (Some((flow.amount * rate / 100 / 365).setScale(4, RoundingMode.HALF_UP)), daysALlIncome.flatMap(e => e._1), daysALlIncome.flatMap(e => e._2))
     }
 
-    FlowItem(flow._id.get.stringify, flow.platform, Category.getDesc(flow.category), stateStr, flow.amount, flow.rate,
-      dailyDaysALlIncome.flatMap(e => e._1), dailyDaysALlIncome.flatMap(e => e._2), dailyDaysALlIncome.flatMap(e => e._3),
+    FlowItem(flow._id.get.stringify, flow.platform, flow.category.toString, Category.getDesc(flow.category), flow.state,
+      stateStr, flow.amount, flow.rate, dailyDaysALlIncome.flatMap(e => e._1),
+      dailyDaysALlIncome.flatMap(e => e._2), dailyDaysALlIncome.flatMap(e => e._3),
       flow.target, flow.startTime.map(t => new DateTime(t).toString("yyyy-MM-dd")),
       flow.endTime.map(t => new DateTime(t).toString("yyyy-MM-dd")),
       new DateTime(flow.createTime).toString("yyyy-MM-dd"))
