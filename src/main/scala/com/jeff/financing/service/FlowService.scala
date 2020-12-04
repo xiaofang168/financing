@@ -49,6 +49,10 @@ trait FlowService extends MongoExecutor[Flow] with DataConverter[Flow, FlowItem]
     FlowRepository.create(flow)
   }
 
+  def delById(id: String): Future[Int] = {
+    super.delete(id)
+  }
+
   def get(id: String): Future[Option[FlowItem]] = {
     val future = FlowRepository.get(id)
     super.convert2Obj(future, converter(_))
