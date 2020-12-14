@@ -18,6 +18,11 @@ trait FlowService extends MongoExecutor[Flow] with DataConverter[Flow, FlowItem]
     super.convert2Vector(future, converter(_))
   }
 
+  def list(startTime: Option[String], endTime: Option[String], category: Option[String]): Future[Vector[FlowItem]] = {
+    val future: Future[Vector[Flow]] = FlowRepository.list(startTime, endTime, category)
+    super.convert2Vector(future, converter(_))
+  }
+
   def save(command: CreateFlowCommand) = {
     val flow = Flow(None, command.platform, Category.withName(command.category), command.state.toInt, command.amount,
       command.rate, command.target, command.startTime.map(e => new DateTime(e).getMillis),

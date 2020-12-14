@@ -15,7 +15,9 @@ object FlowRouter {
   val route =
     path("flows") {
       get {
-        complete(flowService.list())
+        parameters("start_time".optional, "end_time".optional, "category".optional) { (startTime: Option[String], endTime: Option[String], category: Option[String]) =>
+          complete(flowService.list(startTime, endTime, category))
+        }
       } ~
         post {
           import com.jeff.financing.dto.CreateFlowCommandJsonSupport._
