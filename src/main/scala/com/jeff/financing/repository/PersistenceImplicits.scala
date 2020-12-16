@@ -1,6 +1,6 @@
 package com.jeff.financing.repository
 
-import com.jeff.financing.entity.{Account, Flow, Stocktaking}
+import com.jeff.financing.entity.{Account, Flow, MonthlyReport, Stocktaking}
 import reactivemongo.api.bson.{BSONDocumentReader, BSONDocumentWriter, Macros}
 
 object PersistenceImplicits {
@@ -21,4 +21,12 @@ object PersistenceImplicits {
    */
   implicit val stocktakingReader: BSONDocumentReader[Stocktaking] = Macros.reader[Stocktaking]
   implicit val stocktakingWriter: BSONDocumentWriter[Stocktaking] = Macros.writer[Stocktaking]
+
+
+  /**
+   * mnthlyReport
+   */
+  implicit val monthlyReportReader: BSONDocumentReader[MonthlyReport] = Macros.reader[MonthlyReport]
+  implicit val monthlyReportWriter: BSONDocumentWriter[MonthlyReport] = Macros.writer[MonthlyReport]
+
 }
