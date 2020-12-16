@@ -42,6 +42,10 @@ trait StocktakingService extends MongoExecutor[Stocktaking] with DataConverter[S
     super.convert2Vector(future, this.convert)
   }
 
+  def findOne(targetId: String): Future[Option[Stocktaking]] = {
+    findOne(document("targetId" -> targetId), document("date" -> -1))
+  }
+
   def find(targetId: String): Future[Vector[StocktakingItem]] = {
     val future = list(0, Int.MaxValue, document("targetId" -> targetId), document("date" -> -1))
     super.convert2Vector(future, this.convert)

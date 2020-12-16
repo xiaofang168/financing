@@ -41,6 +41,14 @@ trait MongoExecutor[T] {
     })
   }
 
+  def findOne(findDoc: BSONDocument, sortDoc: BSONDocument)(implicit m: BSONDocumentReader[T], tag: ClassTag[T]): Future[Option[T]] = {
+    exec(coll => {
+      coll.find(findDoc, Option.empty[BSONDocument])
+        .sort(sortDoc)
+        .one[T]
+    })
+  }
+
   def list(offset: Int, limit: Int, sortDoc: BSONDocument)(implicit m: BSONDocumentReader[T], tag: ClassTag[T]): Future[Vector[T]] = {
     this.list(offset, limit, document, sortDoc)
   }
