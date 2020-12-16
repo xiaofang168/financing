@@ -41,7 +41,7 @@ trait MongoExecutor[T] {
     })
   }
 
-  def findOne(findDoc: BSONDocument, sortDoc: BSONDocument)(implicit m: BSONDocumentReader[T], tag: ClassTag[T]): Future[Option[T]] = {
+  def findOne(findDoc: BSONDocument, sortDoc: BSONDocument = document("_id" -> -1))(implicit m: BSONDocumentReader[T], tag: ClassTag[T]): Future[Option[T]] = {
     exec(coll => {
       coll.find(findDoc, Option.empty[BSONDocument])
         .sort(sortDoc)
