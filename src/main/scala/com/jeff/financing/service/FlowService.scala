@@ -1,7 +1,7 @@
 package com.jeff.financing.service
 
 import com.jeff.financing.dto.{CreateFlowCommand, FlowItem}
-import com.jeff.financing.entity.Flow
+import com.jeff.financing.entity.{Flow, Stocktaking}
 import com.jeff.financing.enums.Category
 import com.jeff.financing.repository.PersistenceImplicits._
 import com.jeff.financing.repository.{FlowRepository, MongoExecutor}
@@ -13,14 +13,17 @@ import scala.math.BigDecimal.RoundingMode
 
 trait FlowService extends MongoExecutor[Flow] with DataConverter[Flow, FlowItem] {
 
+  val stocktakingService = new StocktakingService {}
+
   def list(): Future[Vector[FlowItem]] = {
     val future: Future[Vector[Flow]] = FlowRepository.list()
-    super.convert2Vector(future, converter(_))
+    super.convert2VectorWithFuture(future, handle)
   }
 
   def list(startTime: Option[String], endTime: Option[String], category: Option[String]): Future[Vector[FlowItem]] = {
     val future: Future[Vector[Flow]] = FlowRepository.list(startTime, endTime, category)
-    super.convert2Vector(future, converter(_))
+    super.convert2VectorWithFuture(future, handle)
+
   }
 
   def save(command: CreateFlowCommand) = {
@@ -60,10 +63,16 @@ trait FlowService extends MongoExecutor[Flow] with DataConverter[Flow, FlowItem]
 
   def get(id: String): Future[Option[FlowItem]] = {
     val future = FlowRepository.get(id)
-    super.convert2Obj(future, converter(_))
+    super.convert2ObjWithFuture(future, handle)
   }
 
-  private def converter(flow: Flow): FlowItem = {
+  val handle: Flow => Future[FlowItem] = flow => {
+    val f: Future[Option[Stocktaking]] = stocktakingService.findOne(flow._id.get.stringify)
+    val fi: Future[FlowItem] = f.map(r => converter(flow, r))
+    fi
+  }
+
+  private def converter(flow: Flow, stocktaking: Option[Stocktaking]): FlowItem = {
     val stateStr = if (flow.state == 1) "存入" else "取出"
 
     // 计算日收益和总收益
@@ -72,16 +81,25 @@ trait FlowService extends MongoExecutor[Flow] with DataConverter[Flow, FlowItem]
       val daysALlIncome = flow.startTime.map { startTime =>
         // 经过的天数
         val days = Days.daysBetween(new DateTime(startTime), DateTime.now()).getDays
-        (Some(days), Some((flow.amount * rate / 100 / 365 * days).setScale(4, RoundingMode.HALF_UP)))
+        (Some(days), Some((flow.amount * rate / 100 / 365 * days).setScale(2, RoundingMode.HALF_UP)))
       }
       // 日收益天数和总收益
-      (Some((flow.amount * rate / 100 / 365).setScale(4, RoundingMode.HALF_UP)), daysALlIncome.flatMap(e => e._1), daysALlIncome.flatMap(e => e._2))
+      (Some((flow.amount * rate / 100 / 365).setScale(2, RoundingMode.HALF_UP)), daysALlIncome.flatMap(e => e._1), daysALlIncome.flatMap(e => e._2))
+    }
+
+    // 盘点金额
+    val stocktakingAmount: BigDecimal = stocktaking match {
+      case Some(e) => e.amount
+      case None => BigDecimal(0)
     }
 
     FlowItem(flow._id.get.stringify, flow.platform, flow.category.toString, Category.getDesc(flow.category), flow.state,
       stateStr, flow.amount, flow.rate, dailyDaysALlIncome.flatMap(e => e._1),
-      dailyDaysALlIncome.flatMap(e => e._2), dailyDaysALlIncome.flatMap(e => e._3),
-      flow.target, flow.startTime.map(t => new DateTime(t).toString("yyyy-MM-dd")),
+      dailyDaysALlIncome.flatMap(e => e._2),
+      dailyDaysALlIncome.flatMap(e => e._3),
+      stocktakingAmount,
+      flow.target,
+      flow.startTime.map(t => new DateTime(t).toString("yyyy-MM-dd")),
       flow.endTime.map(t => new DateTime(t).toString("yyyy-MM-dd")),
       new DateTime(flow.createTime).toString("yyyy-MM-dd"))
   }
