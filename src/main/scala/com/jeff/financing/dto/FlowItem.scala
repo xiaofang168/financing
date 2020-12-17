@@ -4,7 +4,8 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import com.jeff.financing.internal.LowerCaseWithUnderscores
 
 case class FlowItem(id: String,
-                    platform: Option[String],
+                    platform: String,
+                    platformDesc: String,
                     category: String,
                     categoryDesc: String,
                     state: Int,
@@ -21,5 +22,5 @@ case class FlowItem(id: String,
                     createTime: String)
 
 object FlowItemJsonSupport extends LowerCaseWithUnderscores with SprayJsonSupport {
-  implicit val flowItemFormats = jsonFormat16(FlowItem)
+  implicit val flowItemFormats = jsonFormat17(FlowItem)
 }

@@ -2,7 +2,7 @@ package com.jeff.financing.service
 
 import com.jeff.financing.dto.{CreateFlowCommand, FlowItem}
 import com.jeff.financing.entity.{Flow, Stocktaking}
-import com.jeff.financing.enums.Category
+import com.jeff.financing.enums.{CategoryEnum, PlatformEnum}
 import com.jeff.financing.repository.PersistenceImplicits._
 import com.jeff.financing.repository.{FlowRepository, MongoExecutor}
 import org.joda.time.format.DateTimeFormat
@@ -27,7 +27,7 @@ trait FlowService extends MongoExecutor[Flow] with DataConverter[Flow, FlowItem]
   }
 
   def save(command: CreateFlowCommand) = {
-    val flow = Flow(None, command.platform, Category.withName(command.category), command.state.toInt, command.amount,
+    val flow = Flow(None, PlatformEnum.withName(command.platform), CategoryEnum.withName(command.category), command.state.toInt, command.amount,
       command.rate, command.target, command.startDate.map(e => e.replaceAll("-", "").toInt),
       command.endDate.map(e => e.replaceAll("-", "").toInt), System.currentTimeMillis())
     FlowRepository.create(flow)
@@ -42,7 +42,7 @@ trait FlowService extends MongoExecutor[Flow] with DataConverter[Flow, FlowItem]
           Future(0)
         } else {
           val obj = result.get
-          val flow = Flow(obj._id, command.platform, Category.withName(command.category), command.state.toInt, command.amount,
+          val flow = Flow(obj._id, PlatformEnum.withName(command.platform), CategoryEnum.withName(command.category), command.state.toInt, command.amount,
             command.rate, command.target, command.startDate.map(e => e.replaceAll("-", "").toInt),
             command.endDate.map(e => e.replaceAll("-", "").toInt), obj.createTime)
           super.update(id, flow)
@@ -94,7 +94,8 @@ trait FlowService extends MongoExecutor[Flow] with DataConverter[Flow, FlowItem]
       case None => BigDecimal(0)
     }
 
-    FlowItem(flow._id.get.stringify, flow.platform, flow.category.toString, Category.getDesc(flow.category), flow.state,
+    FlowItem(flow._id.get.stringify, flow.platform.toString, PlatformEnum.getDesc(flow.platform),
+      flow.category.toString, CategoryEnum.getDesc(flow.category), flow.state,
       stateStr, flow.amount, flow.rate, dailyDaysALlIncome.flatMap(e => e._1),
       dailyDaysALlIncome.flatMap(e => e._2),
       dailyDaysALlIncome.flatMap(e => e._3),

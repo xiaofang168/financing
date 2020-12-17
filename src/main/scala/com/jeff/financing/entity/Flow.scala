@@ -1,10 +1,8 @@
 package com.jeff.financing.entity
 
-import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
-import com.jeff.financing.enums.Category
-import com.jeff.financing.enums.Category.Category
+import com.jeff.financing.enums.CategoryEnum.Category
+import com.jeff.financing.enums.PlatformEnum.Platform
 import reactivemongo.api.bson.BSONObjectID
-import spray.json.{DeserializationException, JsString, JsValue, RootJsonFormat}
 
 /**
  *
@@ -12,7 +10,7 @@ import spray.json.{DeserializationException, JsString, JsValue, RootJsonFormat}
  *
  * @param _id
  * @param platform   平台
- * @param category   类别 [[com.jeff.financing.enums.Category]]
+ * @param category   类别 [[com.jeff.financing.enums.CategoryEnum]]
  * @param state      状态 (1存入,0取出)
  * @param amount     金额(单位元)
  * @param rate       利率
@@ -23,7 +21,7 @@ import spray.json.{DeserializationException, JsString, JsValue, RootJsonFormat}
  */
 @Persistence(collName = "flow")
 case class Flow(_id: Option[BSONObjectID],
-                platform: Option[String],
+                platform: Platform,
                 category: Category,
                 state: Int,
                 amount: BigDecimal,
@@ -32,24 +30,3 @@ case class Flow(_id: Option[BSONObjectID],
                 startDate: Option[Int],
                 endDate: Option[Int],
                 createTime: Long = System.currentTimeMillis())
-
-
-object FlowJsonSupport extends ObjectIdSerialization with SprayJsonSupport {
-
-  implicit object CategoryJsonFormat extends RootJsonFormat[Category] {
-    def write(category: Category): JsValue = {
-      new JsString(category.toString)
-    }
-
-    def read(jsValue: JsValue): Category = {
-      jsValue match {
-        case JsString(category) =>
-          Category.withName(category)
-        case _ =>
-          throw DeserializationException("String expected")
-      }
-    }
-  }
-
-  implicit val flowFormats = jsonFormat10(Flow)
-}
