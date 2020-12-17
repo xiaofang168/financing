@@ -2,19 +2,19 @@ package com.jeff.financing.enums
 
 import org.junit.Test
 
-class CategoryTest {
+class CategoryEnumTest {
 
   @Test
   def all(): Unit = {
-    Category.values.foreach(println(_))
-    Category.values.foreach(e => {
-      println(Category.getDesc(e))
+    CategoryEnum.values.foreach(println(_))
+    CategoryEnum.values.foreach(e => {
+      println(CategoryEnum.getDesc(e))
     })
   }
 
   @Test
   def index(): Unit = {
-    Category.values.foreach(e => println(e.id))
+    CategoryEnum.values.foreach(e => println(e.id))
   }
 
 }

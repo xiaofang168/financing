@@ -2,7 +2,10 @@ package com.jeff.financing.enums
 
 import reactivemongo.api.bson.{BSONReader, BSONString, BSONValue, BSONWriter}
 
-object Category extends Enumeration {
+/**
+ * 类别枚举
+ */
+object CategoryEnum extends Enumeration {
   type Category = Value
   /**
    * 股票
@@ -58,7 +61,7 @@ object Category extends Enumeration {
   }
 
   implicit object CategoryReader extends BSONReader[Category] {
-    def readTry(bson: BSONValue) = bson.asTry[String].map(e => Category.withName(e))
+    def readTry(bson: BSONValue) = bson.asTry[String].map(e => CategoryEnum.withName(e))
   }
 
   implicit object CategoryWriter extends BSONWriter[Category] {
