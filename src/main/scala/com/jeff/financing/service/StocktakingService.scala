@@ -4,6 +4,7 @@ import com.jeff.financing.dto.{CreateStocktakingCommand, StocktakingItem}
 import com.jeff.financing.entity.Stocktaking
 import com.jeff.financing.repository.MongoExecutor
 import com.jeff.financing.repository.PersistenceImplicits.{stocktakingWriter, _}
+import com.jeff.financing.str2Int
 import reactivemongo.api.bson.document
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -13,7 +14,7 @@ trait StocktakingService extends MongoExecutor[Stocktaking] with DataConverter[S
 
   def save(command: CreateStocktakingCommand): Future[Boolean] = {
     // 时间转换为int
-    val date = command.date.replaceAll("-", "").toInt
+    val date = str2Int(command.date)
     val stocktaking = Stocktaking(None, command.targetId, date, command.amount, command.comment, System.currentTimeMillis)
     create(stocktaking)
   }
@@ -27,7 +28,7 @@ trait StocktakingService extends MongoExecutor[Stocktaking] with DataConverter[S
           Future(0)
         } else {
           val obj = result.get
-          val date = command.date.replaceAll("-", "").toInt
+          val date = str2Int(command.date)
           val u = Stocktaking(obj._id, obj.targetId, date, command.amount, command.comment, obj.createTime)
           super.update(id, u)
         }
