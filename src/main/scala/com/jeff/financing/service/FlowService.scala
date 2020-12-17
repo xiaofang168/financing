@@ -29,7 +29,7 @@ trait FlowService extends MongoExecutor[Flow] with DataConverter[Flow, FlowItem]
   def save(command: CreateFlowCommand) = {
     val flow = Flow(None, PlatformEnum.withName(command.platform), CategoryEnum.withName(command.category), command.state.toInt, command.amount,
       command.rate, command.target, command.startDate.map(e => e.replaceAll("-", "").toInt),
-      command.endDate.map(e => e.replaceAll("-", "").toInt), System.currentTimeMillis())
+      command.endDate.map(e => e.replaceAll("-", "").toInt))
     FlowRepository.create(flow)
   }
 
@@ -44,7 +44,7 @@ trait FlowService extends MongoExecutor[Flow] with DataConverter[Flow, FlowItem]
           val obj = result.get
           val flow = Flow(obj._id, PlatformEnum.withName(command.platform), CategoryEnum.withName(command.category), command.state.toInt, command.amount,
             command.rate, command.target, command.startDate.map(e => e.replaceAll("-", "").toInt),
-            command.endDate.map(e => e.replaceAll("-", "").toInt), obj.createTime)
+            command.endDate.map(e => e.replaceAll("-", "").toInt), obj.income, obj.createTime)
           super.update(id, flow)
         }
       }
