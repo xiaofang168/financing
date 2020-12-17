@@ -1,7 +1,5 @@
 package com.jeff.financing.entity
 
-import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
-import com.jeff.financing.internal.LowerCaseWithUnderscores
 import reactivemongo.api.bson.BSONObjectID
 
 /**
@@ -15,9 +13,9 @@ import reactivemongo.api.bson.BSONObjectID
  * @param createTime 创建时间
  */
 @Persistence(collName = "stocktaking")
-case class Stocktaking(_id: Option[BSONObjectID], targetId: String, date: Int, amount: BigDecimal, comment: Option[String], createTime: Long)
-
-object StocktakingJsonSupport extends ObjectIdSerialization with LowerCaseWithUnderscores with SprayJsonSupport {
-  implicit val stocktakingFormats = jsonFormat6(Stocktaking)
-}
-
+case class Stocktaking(_id: Option[BSONObjectID],
+                       targetId: String,
+                       date: Int,
+                       amount: BigDecimal,
+                       comment: Option[String] = None,
+                       createTime: Long = System.currentTimeMillis())
