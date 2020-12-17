@@ -2,8 +2,6 @@ package com.jeff
 
 import java.lang.reflect.Method
 
-import org.joda.time.DateTime
-import org.joda.time.format.DateTimeFormat
 import reactivemongo.api.bson.{BSONBoolean, BSONDouble, BSONInteger, BSONLong, BSONNull, BSONString, BSONValue}
 
 import scala.reflect.ClassTag
@@ -11,12 +9,14 @@ import scala.reflect.ClassTag
 
 package object financing {
 
-  def time2Long(time: Option[String], format: String = "yyyy-MM-dd"): Option[Long] = {
-    time.flatMap {
+  def str2Int(str: Option[String]): Option[Int] = {
+    str.flatMap {
       case "" => None
-      case e@_ => Some(DateTime.parse(e, DateTimeFormat.forPattern(format)).getMillis)
+      case e@_ => Some(e.replaceAll("[^0-9]", "").toInt)
     }
   }
+
+  def str2Int(str: String): Int = str.replaceAll("[^0-9]", "").toInt
 
   def getBson(v: Any): BSONValue = v match {
     case value: String => BSONString(value)
