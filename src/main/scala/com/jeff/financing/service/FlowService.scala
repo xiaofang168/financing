@@ -5,6 +5,7 @@ import com.jeff.financing.entity.{Flow, Stocktaking}
 import com.jeff.financing.enums.Category
 import com.jeff.financing.repository.PersistenceImplicits._
 import com.jeff.financing.repository.{FlowRepository, MongoExecutor}
+import org.joda.time.format.DateTimeFormat
 import org.joda.time.{DateTime, Days}
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -20,16 +21,15 @@ trait FlowService extends MongoExecutor[Flow] with DataConverter[Flow, FlowItem]
     super.convert2VectorWithFuture(future, handle)
   }
 
-  def list(startTime: Option[String], endTime: Option[String], category: Option[String]): Future[Vector[FlowItem]] = {
-    val future: Future[Vector[Flow]] = FlowRepository.list(startTime, endTime, category)
+  def list(startDate: Option[String], endDate: Option[String], category: Option[String]): Future[Vector[FlowItem]] = {
+    val future: Future[Vector[Flow]] = FlowRepository.list(startDate, endDate, category)
     super.convert2VectorWithFuture(future, handle)
-
   }
 
   def save(command: CreateFlowCommand) = {
     val flow = Flow(None, command.platform, Category.withName(command.category), command.state.toInt, command.amount,
-      command.rate, command.target, command.startTime.map(e => new DateTime(e).getMillis),
-      command.endTime.map(e => new DateTime(e).getMillis), System.currentTimeMillis())
+      command.rate, command.target, command.startDate.map(e => e.replaceAll("-", "").toInt),
+      command.endDate.map(e => e.replaceAll("-", "").toInt), System.currentTimeMillis())
     FlowRepository.create(flow)
   }
 
@@ -43,8 +43,8 @@ trait FlowService extends MongoExecutor[Flow] with DataConverter[Flow, FlowItem]
         } else {
           val obj = result.get
           val flow = Flow(obj._id, command.platform, Category.withName(command.category), command.state.toInt, command.amount,
-            command.rate, command.target, command.startTime.map(e => new DateTime(e).getMillis),
-            command.endTime.map(e => new DateTime(e).getMillis), obj.createTime)
+            command.rate, command.target, command.startDate.map(e => e.replaceAll("-", "").toInt),
+            command.endDate.map(e => e.replaceAll("-", "").toInt), obj.createTime)
           super.update(id, flow)
         }
       }
@@ -78,9 +78,10 @@ trait FlowService extends MongoExecutor[Flow] with DataConverter[Flow, FlowItem]
     // 计算日收益和总收益
     val dailyDaysALlIncome = flow.rate map { rate =>
       // 计算总收益
-      val daysALlIncome = flow.startTime.map { startTime =>
+      val daysALlIncome = flow.startDate.map { startDate =>
         // 经过的天数
-        val days = Days.daysBetween(new DateTime(startTime), DateTime.now()).getDays
+        val startTime = DateTime.parse(startDate.toString, DateTimeFormat.forPattern("yyyyMMdd"))
+        val days = Days.daysBetween(startTime, DateTime.now()).getDays
         (Some(days), Some((flow.amount * rate / 100 / 365 * days).setScale(2, RoundingMode.HALF_UP)))
       }
       // 日收益天数和总收益
@@ -99,8 +100,8 @@ trait FlowService extends MongoExecutor[Flow] with DataConverter[Flow, FlowItem]
       dailyDaysALlIncome.flatMap(e => e._3),
       stocktakingAmount,
       flow.target,
-      flow.startTime.map(t => new DateTime(t).toString("yyyy-MM-dd")),
-      flow.endTime.map(t => new DateTime(t).toString("yyyy-MM-dd")),
+      flow.startDate,
+      flow.endDate,
       new DateTime(flow.createTime).toString("yyyy-MM-dd"))
   }
 

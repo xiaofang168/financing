@@ -5,7 +5,7 @@ import com.jeff.financing.internal.LowerCaseWithUnderscores
 
 case class CreateFlowCommand(platform: Option[String], category: String, state: String,
                              amount: BigDecimal, rate: Option[BigDecimal],
-                             target: String, startTime: Option[String], endTime: Option[String])
+                             target: String, startDate: Option[String], endDate: Option[String])
 
 object CreateFlowCommandJsonSupport extends LowerCaseWithUnderscores with SprayJsonSupport {
   implicit val createFlowCommandFormats = jsonFormat8(CreateFlowCommand)
