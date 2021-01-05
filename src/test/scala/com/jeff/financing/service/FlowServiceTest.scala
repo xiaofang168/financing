@@ -75,6 +75,7 @@ class FlowServiceTest {
       .mapValues(_.map(_.amount).sum)
       .toMap
 
+    // 类别对应的资产id
     val categoryFlowIdsMap: Map[String, List[String]] = flows.groupBy(e => e.category.toString).view.mapValues(_.map(_._id.get.stringify)).toMap
     // 按照类别对应的标的id进行统计
     val clCFSAmountMap: Map[String, (BigDecimal, BigDecimal)] = categoryFlowIdsMap.map { e =>
