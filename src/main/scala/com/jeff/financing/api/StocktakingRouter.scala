@@ -1,6 +1,6 @@
 package com.jeff.financing.api
 
-import akka.http.scaladsl.server.Directives.{as, complete, entity, get, onComplete, path, post, _}
+import akka.http.scaladsl.server.Directives._
 import com.jeff.financing.dto.CreateStocktakingCommand
 import com.jeff.financing.dto.StocktakingItemJsonSupport._
 import com.jeff.financing.service.StocktakingService
