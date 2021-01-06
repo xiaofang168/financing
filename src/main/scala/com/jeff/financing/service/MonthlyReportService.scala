@@ -112,7 +112,7 @@ trait MonthlyReportService extends MongoExecutor[MonthlyReport] {
     f map (_.toList)
   }
 
-  def preview(startDate: Int, endDate: Int): Unit = {
+  def previews(startDate: Int, endDate: Int): Future[Vector[MonthlyReportItem]] = {
     val starDateTime = DateTime.parse(startDate.toString, DateTimeFormat.forPattern("yyyyMM"))
     val endDateTime = DateTime.parse(endDate.toString, DateTimeFormat.forPattern("yyyyMM"))
     val m = Months.monthsBetween(starDateTime, endDateTime)
