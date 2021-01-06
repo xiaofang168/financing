@@ -8,7 +8,7 @@ object MonthlyReportRouter {
 
   val service = new MonthlyReportService {}
   val route =
-    path("monthly/report/previews") {
+    path("monthly" / "report" / "previews") {
       get {
         parameters("start_date".as[Int], "end_date".as[Int]) { (startDate, endDate) =>
           complete(service.previews(startDate, endDate))

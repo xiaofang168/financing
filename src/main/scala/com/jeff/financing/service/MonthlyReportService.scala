@@ -118,7 +118,8 @@ trait MonthlyReportService extends MongoExecutor[MonthlyReport] {
     val m = Months.monthsBetween(starDateTime, endDateTime)
     val monthMap: Map[Int, Int] = getMonthMap(starDateTime.getMillis, m.getMonths)
     val future: Future[Vector[MonthlyReport]] = list(0, Int.MaxValue,
-      document("date" -> document("$gte" -> startDate, "$lte" -> endDate)))
+      document("date" -> document("$gte" -> startDate, "$lte" -> endDate)),
+      document("date" -> -1))
     for {
       r <- future
     } yield {

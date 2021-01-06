@@ -13,6 +13,11 @@ object PlatformEnum extends Enumeration {
   val ALI,
 
   /**
+   * 天天基金
+   */
+  FUND,
+
+  /**
    * 腾讯
    */
   TENCENT,
@@ -45,6 +50,7 @@ object PlatformEnum extends Enumeration {
   def getDesc(platform: Platform): String = {
     platform match {
       case ALI => "阿里"
+      case FUND => "天天基金"
       case TENCENT => "腾讯"
       case BAIDU => "百度"
       case JD => "京东"
