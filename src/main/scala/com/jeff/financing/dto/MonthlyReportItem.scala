@@ -10,7 +10,7 @@ import com.jeff.financing.internal.LowerCaseWithUnderscores
  * @param date  日期yyyyMM
  * @param isGen 是否生成0否,1是
  */
-case class MonthlyReportItem(id: String,
+case class MonthlyReportItem(id: Option[String],
                              date: Int,
                              isGen: Int)
 

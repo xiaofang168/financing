@@ -11,6 +11,7 @@ import org.joda.time.format.DateTimeFormat
 import org.joda.time.{DateTime, Months}
 import reactivemongo.api.bson.document
 
+import scala.collection.immutable
 import scala.collection.immutable.SortedMap
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -112,22 +113,30 @@ trait MonthlyReportService extends MongoExecutor[MonthlyReport] {
     f map (_.toList)
   }
 
-  def previews(startDate: Int, endDate: Int): Future[Vector[MonthlyReportItem]] = {
+  def previews(startDate: Int, endDate: Int): Future[immutable.Iterable[MonthlyReportItem]] = {
     val starDateTime = DateTime.parse(startDate.toString, DateTimeFormat.forPattern("yyyyMM"))
     val endDateTime = DateTime.parse(endDate.toString, DateTimeFormat.forPattern("yyyyMM"))
     val m = Months.monthsBetween(starDateTime, endDateTime)
-    val monthMap: Map[Int, Int] = getMonthMap(starDateTime.getMillis, m.getMonths)
+    val futureMonthMap: Future[Map[Int, Int]] = Future {
+      getMonthMap(starDateTime.getMillis, m.getMonths)
+    }
     val future: Future[Vector[MonthlyReport]] = list(0, Int.MaxValue,
       document("date" -> document("$gte" -> startDate, "$lte" -> endDate)),
       document("date" -> -1))
     for {
+      monthMap <- futureMonthMap
       r <- future
     } yield {
-      r map { e =>
-        val isGen = if (monthMap.contains(e.date))
-          1
-        else 0
-        MonthlyReportItem(e._id.get.stringify, e.date, isGen)
+      val map: Map[Int, MonthlyReport] = r.map(t => t.date -> t).toMap
+      monthMap.map {
+        case (k, v) => {
+          if (map.contains(k)) {
+            val mr = map.get(k).get
+            MonthlyReportItem(Some(mr._id.get.stringify), k, v)
+          } else {
+            MonthlyReportItem(None, k, 0)
+          }
+        }
       }
     }
   }
@@ -136,7 +145,7 @@ trait MonthlyReportService extends MongoExecutor[MonthlyReport] {
     val starDateTime = new DateTime(startTime)
     val range = 0L to months + 1
     range map { e =>
-      starDateTime.plusMonths(e.toInt).toString("yyyyMM").toInt -> 0
+      starDateTime.plusMonths(e.toInt).toString("yyyyMM").toInt -> 1
     } to SortedMap
   }
 
