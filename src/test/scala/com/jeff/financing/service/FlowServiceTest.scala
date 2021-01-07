@@ -114,7 +114,7 @@ class FlowServiceTest {
       clCFSAmountMap.get(CategoryEnum.BANK.toString).map(_._2),
       clCFSAmountMap.get(CategoryEnum.SAVING.toString).map(_._2))
 
-    val monthlyReport = com.jeff.financing.entity.MonthlyReport(None, 202012, capital, capitalInterest, income)
+    val monthlyReport = com.jeff.financing.entity.MonthlyReport(None, 202012, 22, 222, 22, capital, capitalInterest, income)
 
     println(categoryFlowAmountCountMap)
     println(monthlyReport)
