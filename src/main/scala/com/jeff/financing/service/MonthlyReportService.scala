@@ -56,7 +56,7 @@ trait MonthlyReportService extends MongoExecutor[MonthlyReport] {
    *
    * @param date
    */
-  def gen(date: Int): Future[MonthlyReport] = {
+  def gen(date: Int): Future[Boolean] = {
     // 上个月的时间
     val lastDate: Int = DateTime.parse(date.toString, DateTimeFormat.forPattern("yyyyMM"))
       .minusMonths(1)
@@ -64,8 +64,8 @@ trait MonthlyReportService extends MongoExecutor[MonthlyReport] {
       .toInt
     // 查询是否生成
     val f: Future[Option[MonthlyReport]] = findOne(document("date" -> date))
-    f flatMap {
-      case Some(a@_) => Future(a)
+    val a: Future[Future[Boolean]] = f flatMap {
+      case Some(_) => Future(Future(false))
       case None => {
         for {
           flows <- findAllFlow()
@@ -75,8 +75,14 @@ trait MonthlyReportService extends MongoExecutor[MonthlyReport] {
           // 计算本金和
           val capitalSum: BigDecimal = flows.map(e => e.amount).sum
 
+          // 已经盘点的资金和
+          val hadStocktakingCapitalInterestSum = stocktaking.map(e => e.amount).sum
+          val targetIds = stocktaking.map(e => e.targetId)
+          // 未进行当月盘点的资金
+          val noStocktakingCapitalInterestSum = flows.filter(e => !targetIds.contains(e._id.get.stringify)).map(e => e.amount).sum
+
           // 计算本息和
-          val capitalInterestSum = stocktaking.map(e => e.amount).sum
+          val capitalInterestSum = hadStocktakingCapitalInterestSum + noStocktakingCapitalInterestSum
 
           // 分类本金组
           val categoryFlowAmountCountMap: Map[String, BigDecimal] = flows.groupBy(e => e.category.toString)
@@ -125,10 +131,14 @@ trait MonthlyReportService extends MongoExecutor[MonthlyReport] {
             clCFSAmountMap.get(CategoryEnum.BANK.toString).map(_._2),
             clCFSAmountMap.get(CategoryEnum.SAVING.toString).map(_._2))
 
-          MonthlyReport(None, date, capitalSum, capitalInterestSum, capitalInterestSum - capitalSum, capital, capitalInterest, income)
+          val monthlyReport = MonthlyReport(None, date, capitalSum, capitalInterestSum, capitalInterestSum - capitalSum, capital, capitalInterest, income)
+
+          // 生成月报
+          create(monthlyReport)
         }
       }
     }
+    a.flatten
   }
 
   /**
