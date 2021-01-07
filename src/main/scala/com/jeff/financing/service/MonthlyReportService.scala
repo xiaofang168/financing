@@ -1,7 +1,7 @@
 package com.jeff.financing.service
 
 
-import com.jeff.financing.dto.MonthlyReportItem
+import com.jeff.financing.dto.{MonthlyReportItem, MonthlyReportRow}
 import com.jeff.financing.entity.{Flow, MonthlyReport, Stocktaking}
 import com.jeff.financing.enums.CategoryEnum
 import com.jeff.financing.repository.MongoExecutor
@@ -20,6 +20,36 @@ trait MonthlyReportService extends MongoExecutor[MonthlyReport] {
 
   val flowService = new FlowService {}
   val stocktakingService: StocktakingService = new StocktakingService {}
+
+  def detail(date: Int): Future[Option[List[MonthlyReportRow]]] = {
+    val a = new DataConverter[MonthlyReport, List[MonthlyReportRow]] {}
+    a.convert2Obj(super.findOne(document("date" -> date)), convert)
+  }
+
+  val convert: MonthlyReport => List[MonthlyReportRow] = monthlyReport => {
+    List(MonthlyReportRow("日期", Some(monthlyReport.date.toString), "基本信息"),
+      MonthlyReportRow("本金和", Some(monthlyReport.capitalSum.toString()), "基本信息"),
+      MonthlyReportRow("本息和", Some(monthlyReport.capitalInterestSum.toString()), "基本信息"),
+      MonthlyReportRow("月收益", Some(monthlyReport.income.toString), "基本信息"),
+      MonthlyReportRow("总收益", Some(monthlyReport.incomeSum.toString()), "基本信息"),
+      MonthlyReportRow("创建时间", Some(new DateTime(Some(monthlyReport.createTime)).toString("yyyy-MM-dd")), "基本信息"),
+      MonthlyReportRow("股票", monthlyReport.capital.stock.map(e => e.toString()), "本金"),
+      MonthlyReportRow("股票基金", monthlyReport.capital.stockFund.map(e => e.toString()), "本金"),
+      MonthlyReportRow("指数基金", monthlyReport.capital.indexFund.map(e => e.toString()), "本金"),
+      MonthlyReportRow("债券基金", monthlyReport.capital.bondFund.map(e => e.toString()), "本金"),
+      MonthlyReportRow("货币基金", monthlyReport.capital.monetaryFund.map(e => e.toString()), "本金"),
+      MonthlyReportRow("保险", monthlyReport.capital.insurance.map(e => e.toString()), "本金"),
+      MonthlyReportRow("银行理财", monthlyReport.capital.bank.map(e => e.toString()), "本金"),
+      MonthlyReportRow("储蓄", monthlyReport.capital.saving.map(e => e.toString()), "本金"),
+      MonthlyReportRow("股票", monthlyReport.capitalInterest.stock.map(e => e.toString()), "本息"),
+      MonthlyReportRow("股票基金", monthlyReport.capitalInterest.stockFund.map(e => e.toString()), "本息"),
+      MonthlyReportRow("指数基金", monthlyReport.capitalInterest.indexFund.map(e => e.toString()), "本息"),
+      MonthlyReportRow("债券基金", monthlyReport.capitalInterest.bondFund.map(e => e.toString()), "本息"),
+      MonthlyReportRow("货币基金", monthlyReport.capitalInterest.monetaryFund.map(e => e.toString()), "本息"),
+      MonthlyReportRow("保险", monthlyReport.capitalInterest.insurance.map(e => e.toString()), "本息"),
+      MonthlyReportRow("银行理财", monthlyReport.capitalInterest.bank.map(e => e.toString()), "本息"),
+      MonthlyReportRow("储蓄", monthlyReport.capitalInterest.saving.map(e => e.toString()), "本息"))
+  }
 
   /**
    * 生成月报
@@ -42,7 +72,13 @@ trait MonthlyReportService extends MongoExecutor[MonthlyReport] {
           stocktaking <- findAllStocktaking(date)
           lastStocktaking <- findAllStocktaking(lastDate)
         } yield {
-          // 分类本金和
+          // 计算本金和
+          val capitalSum: BigDecimal = flows.map(e => e.amount).sum
+
+          // 计算本息和
+          val capitalInterestSum = stocktaking.map(e => e.amount).sum
+
+          // 分类本金组
           val categoryFlowAmountCountMap: Map[String, BigDecimal] = flows.groupBy(e => e.category.toString)
             .view
             .mapValues(_.map(_.amount).sum)
@@ -89,7 +125,7 @@ trait MonthlyReportService extends MongoExecutor[MonthlyReport] {
             clCFSAmountMap.get(CategoryEnum.BANK.toString).map(_._2),
             clCFSAmountMap.get(CategoryEnum.SAVING.toString).map(_._2))
 
-          MonthlyReport(None, date, capital, capitalInterest, income)
+          MonthlyReport(None, date, capitalSum, capitalInterestSum, capitalInterestSum - capitalSum, capital, capitalInterest, income)
         }
       }
     }
