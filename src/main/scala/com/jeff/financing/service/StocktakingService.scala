@@ -5,6 +5,8 @@ import com.jeff.financing.entity.Stocktaking
 import com.jeff.financing.repository.MongoExecutor
 import com.jeff.financing.repository.PersistenceImplicits.{stocktakingWriter, _}
 import com.jeff.financing.str2Int
+import org.joda.time.DateTime
+import org.joda.time.format.DateTimeFormat
 import reactivemongo.api.bson.document
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -61,7 +63,8 @@ trait StocktakingService extends MongoExecutor[Stocktaking] with DataConverter[S
   }
 
   val convert: Stocktaking => StocktakingItem = stocktaking => {
-    StocktakingItem(stocktaking.targetId, stocktaking._id.get.stringify, stocktaking.date, stocktaking.amount, stocktaking.comment)
+    val dateFormat = DateTime.parse(stocktaking.date.toString, DateTimeFormat.forPattern("yyyyMM")).toString("yyyy-MM")
+    StocktakingItem(stocktaking.targetId, stocktaking._id.get.stringify, dateFormat, stocktaking.amount, stocktaking.comment)
   }
 
 }
