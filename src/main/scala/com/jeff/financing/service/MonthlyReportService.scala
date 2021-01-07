@@ -12,7 +12,7 @@ import org.joda.time.{DateTime, Months}
 import reactivemongo.api.bson.document
 
 import scala.collection.immutable
-import scala.collection.immutable.SortedMap
+import scala.collection.immutable.ListMap
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
@@ -170,7 +170,7 @@ trait MonthlyReportService extends MongoExecutor[MonthlyReport] {
     val starDateTime = DateTime.parse(startDate.toString, DateTimeFormat.forPattern("yyyyMM"))
     val endDateTime = DateTime.parse(endDate.toString, DateTimeFormat.forPattern("yyyyMM"))
     val m = Months.monthsBetween(starDateTime, endDateTime)
-    val futureMonthMap: Future[Map[Int, Int]] = Future {
+    val futureMonthMap: Future[ListMap[Int, Int]] = Future {
       getMonthMap(starDateTime.getMillis, m.getMonths)
     }
     val future: Future[Vector[MonthlyReport]] = list(0, Int.MaxValue,
@@ -194,12 +194,12 @@ trait MonthlyReportService extends MongoExecutor[MonthlyReport] {
     }
   }
 
-  private def getMonthMap(startTime: Long, months: Int): SortedMap[Int, Int] = {
+  private def getMonthMap(startTime: Long, months: Int): ListMap[Int, Int] = {
     val starDateTime = new DateTime(startTime)
-    val range = 0L to months + 1
+    val range = months + 1 to 0 by -1
     range map { e =>
-      starDateTime.plusMonths(e.toInt).toString("yyyyMM").toInt -> 1
-    } to SortedMap
+      starDateTime.plusMonths(e).toString("yyyyMM").toInt -> 1
+    } to ListMap
   }
 
 }
