@@ -1,6 +1,6 @@
 package com.jeff.financing.api
 
-import akka.http.scaladsl.server.Directives._
+import akka.http.scaladsl.server.Directives.{path, _}
 import com.jeff.financing.dto.MonthlyReportItemJsonSupport._
 import com.jeff.financing.service.MonthlyReportService
 
@@ -14,6 +14,13 @@ object MonthlyReportRouter {
       get {
         parameters("start_date".as[Int], "end_date".as[Int]) { (startDate, endDate) =>
           complete(service.previews(startDate, endDate))
+        }
+      }
+    } ~ path("monthly" / "report" / "income") {
+      get {
+        parameters("start_date".as[Int], "end_date".as[Int]) { (startDate, endDate) =>
+          import com.jeff.financing.dto.IncomeReportJsonSupport._
+          complete(service.findIncome(startDate, endDate))
         }
       }
     } ~ path("monthly" / "report" / "gen" / IntNumber) { date =>

@@ -1,7 +1,7 @@
 package com.jeff.financing.service
 
 
-import com.jeff.financing.dto.{MonthlyReportItem, MonthlyReportRow}
+import com.jeff.financing.dto.{IncomeReport, MonthlyReportItem, MonthlyReportRow}
 import com.jeff.financing.entity.{Flow, MonthlyReport, Stocktaking}
 import com.jeff.financing.enums.CategoryEnum
 import com.jeff.financing.repository.MongoExecutor
@@ -9,12 +9,13 @@ import com.jeff.financing.repository.PersistenceImplicits._
 import com.jeff.financing.vo.{Capital, CapitalInterest, Income}
 import org.joda.time.format.DateTimeFormat
 import org.joda.time.{DateTime, Months}
-import reactivemongo.api.bson.document
+import reactivemongo.api.bson.{BSONDocument, document}
 
 import scala.collection.immutable
 import scala.collection.immutable.ListMap
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import scala.language.postfixOps
 
 trait MonthlyReportService extends MongoExecutor[MonthlyReport] {
 
@@ -148,6 +149,25 @@ trait MonthlyReportService extends MongoExecutor[MonthlyReport] {
     a.flatten
   }
 
+  def findIncome(startDate: Int, endDate: Int): Future[IncomeReport] = {
+    val future = find(startDate, endDate, document("date" -> 1))
+    for {
+      f <- future
+    } yield {
+      val value = f.map(e => Array(e.date.toString, e.capitalSum, e.capitalInterestSum, e.incomeSum))
+      val transpose = value.toArray.transpose
+      val dates: List[String] = transpose(0) map (_.toString) toList
+      val capitals: List[BigDecimal] = transpose(1) map (_.asInstanceOf[BigDecimal]) toList
+      val capitalInterests: List[BigDecimal] = transpose(2) map (_.asInstanceOf[BigDecimal]) toList
+      val incomes: List[BigDecimal] = transpose(3) map (_.asInstanceOf[BigDecimal]) toList;
+      IncomeReport(dates, capitals, capitalInterests, incomes)
+    }
+  }
+
+  private def find(startDate: Int, endDate: Int, sortDoc: BSONDocument = document("date" -> -1)): Future[Vector[MonthlyReport]] = {
+    list(0, Int.MaxValue, document("date" -> document("$gte" -> startDate, "$lte" -> endDate)), sortDoc)
+  }
+
   /**
    * 查询所有流水
    */
@@ -173,9 +193,7 @@ trait MonthlyReportService extends MongoExecutor[MonthlyReport] {
     val futureMonthMap: Future[ListMap[Int, Int]] = Future {
       getMonthMap(starDateTime.getMillis, m.getMonths)
     }
-    val future: Future[Vector[MonthlyReport]] = list(0, Int.MaxValue,
-      document("date" -> document("$gte" -> startDate, "$lte" -> endDate)),
-      document("date" -> -1))
+    val future: Future[Vector[MonthlyReport]] = find(startDate, endDate)
     for {
       monthMap <- futureMonthMap
       r <- future
