@@ -19,4 +19,4 @@ case class CapitalInterest(stock: Option[BigDecimal],
                            monetaryFund: Option[BigDecimal],
                            insurance: Option[BigDecimal],
                            bank: Option[BigDecimal],
-                           saving: Option[BigDecimal])
+                           saving: Option[BigDecimal]) extends Asset
