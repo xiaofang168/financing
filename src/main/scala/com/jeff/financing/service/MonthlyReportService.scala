@@ -6,7 +6,7 @@ import com.jeff.financing.entity.{Flow, MonthlyReport, Stocktaking}
 import com.jeff.financing.enums.CategoryEnum
 import com.jeff.financing.repository.MongoExecutor
 import com.jeff.financing.repository.PersistenceImplicits._
-import com.jeff.financing.vo.{Capital, CapitalInterest, Income}
+import com.jeff.financing.vo.{Asset, Capital, CapitalInterest, Income}
 import org.joda.time.format.DateTimeFormat
 import org.joda.time.{DateTime, Months}
 import reactivemongo.api.bson.{BSONDocument, document}
@@ -164,25 +164,28 @@ trait MonthlyReportService extends MongoExecutor[MonthlyReport] {
     }
   }
 
-  def findAssert(startDate: Int, endDate: Int): Future[AssetReport] = {
+  def findAssert(startDate: Int, endDate: Int, typ: Int): Future[AssetReport] = {
     val future = find(startDate, endDate, document("date" -> 1))
     for {
       f <- future
     } yield {
-      val value = f.map(e => Array(e.date.toString, e.capital))
+      val value = if (typ == 0) f.map(e => Array(e.date.toString, e.capital)) else f.map(e => Array(e.date.toString, e.capitalInterest))
       val transpose = value.toArray.transpose
-      val dates: List[String] = transpose(0) map (_.toString) toList
-      val capitals: List[Capital] = transpose(1) map (_.asInstanceOf[Capital]) toList
-      val stocks: List[BigDecimal] = capitals.map(e => e.stock.getOrElse(BigDecimal(0)))
-      val stockFunds: List[BigDecimal] = capitals.map(e => e.stockFund.getOrElse(BigDecimal(0)))
-      val indexFunds: List[BigDecimal] = capitals.map(e => e.indexFund.getOrElse(BigDecimal(0)))
-      val bondFunds: List[BigDecimal] = capitals.map(e => e.bondFund.getOrElse(BigDecimal(0)))
-      val monetaryFunds: List[BigDecimal] = capitals.map(e => e.monetaryFund.getOrElse(BigDecimal(0)))
-      val insurances: List[BigDecimal] = capitals.map(e => e.insurance.getOrElse(BigDecimal(0)))
-      val banks: List[BigDecimal] = capitals.map(e => e.bank.getOrElse(BigDecimal(0)))
-      val savings: List[BigDecimal] = capitals.map(e => e.saving.getOrElse(BigDecimal(0)))
-      AssetReport(dates, stocks, stockFunds, indexFunds, bondFunds, monetaryFunds, insurances, banks, savings)
+      val dates: List[String] = transpose(0) map (_.toString) toList;
+      convert(dates, transpose(1) map (_.asInstanceOf[Asset]) toList)
     }
+  }
+
+  private def convert(dates: List[String], capitals: List[Asset]): AssetReport = {
+    val stocks: List[BigDecimal] = capitals.map(e => e.stock.getOrElse(BigDecimal(0)))
+    val stockFunds: List[BigDecimal] = capitals.map(e => e.stockFund.getOrElse(BigDecimal(0)))
+    val indexFunds: List[BigDecimal] = capitals.map(e => e.indexFund.getOrElse(BigDecimal(0)))
+    val bondFunds: List[BigDecimal] = capitals.map(e => e.bondFund.getOrElse(BigDecimal(0)))
+    val monetaryFunds: List[BigDecimal] = capitals.map(e => e.monetaryFund.getOrElse(BigDecimal(0)))
+    val insurances: List[BigDecimal] = capitals.map(e => e.insurance.getOrElse(BigDecimal(0)))
+    val banks: List[BigDecimal] = capitals.map(e => e.bank.getOrElse(BigDecimal(0)))
+    val savings: List[BigDecimal] = capitals.map(e => e.saving.getOrElse(BigDecimal(0)))
+    AssetReport(dates, stocks, stockFunds, indexFunds, bondFunds, monetaryFunds, insurances, banks, savings)
   }
 
   private def find(startDate: Int, endDate: Int, sortDoc: BSONDocument = document("date" -> -1)): Future[Vector[MonthlyReport]] = {

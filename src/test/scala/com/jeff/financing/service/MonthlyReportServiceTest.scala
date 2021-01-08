@@ -22,7 +22,7 @@ class MonthlyReportServiceTest {
   @Test
   def findAssert(): Unit = {
     val service = new MonthlyReportService {}
-    val f = service.findAssert(202011, 202012)
+    val f = service.findAssert(202011, 202012, 0)
     f onComplete {
       case Success(value) => println(value)
       case Failure(exception) => exception.printStackTrace()

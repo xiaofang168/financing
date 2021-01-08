@@ -23,11 +23,18 @@ object MonthlyReportRouter {
           complete(service.findIncome(startDate, endDate))
         }
       }
-    } ~ path("monthly" / "report" / "asset") {
+    } ~ path("monthly" / "report" / "asset" / "capital") {
       get {
         parameters("start_date".as[Int], "end_date".as[Int]) { (startDate, endDate) =>
           import com.jeff.financing.dto.AssetReportJsonSupport._
-          complete(service.findAssert(startDate, endDate))
+          complete(service.findAssert(startDate, endDate, 0))
+        }
+      }
+    } ~ path("monthly" / "report" / "asset" / "capital_interests") {
+      get {
+        parameters("start_date".as[Int], "end_date".as[Int]) { (startDate, endDate) =>
+          import com.jeff.financing.dto.AssetReportJsonSupport._
+          complete(service.findAssert(startDate, endDate, 1))
         }
       }
     } ~ path("monthly" / "report" / "gen" / IntNumber) { date =>
