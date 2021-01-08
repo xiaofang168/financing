@@ -23,6 +23,13 @@ object MonthlyReportRouter {
           complete(service.findIncome(startDate, endDate))
         }
       }
+    } ~ path("monthly" / "report" / "asset") {
+      get {
+        parameters("start_date".as[Int], "end_date".as[Int]) { (startDate, endDate) =>
+          import com.jeff.financing.dto.AssetReportJsonSupport._
+          complete(service.findAssert(startDate, endDate))
+        }
+      }
     } ~ path("monthly" / "report" / "gen" / IntNumber) { date =>
       get {
         import com.jeff.financing.internal.FutureConverterImplicits._
