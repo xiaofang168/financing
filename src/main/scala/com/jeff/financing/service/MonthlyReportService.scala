@@ -1,7 +1,7 @@
 package com.jeff.financing.service
 
 
-import com.jeff.financing.dto.{IncomeReport, MonthlyReportItem, MonthlyReportRow}
+import com.jeff.financing.dto.{AssetReport, IncomeReport, MonthlyReportItem, MonthlyReportRow}
 import com.jeff.financing.entity.{Flow, MonthlyReport, Stocktaking}
 import com.jeff.financing.enums.CategoryEnum
 import com.jeff.financing.repository.MongoExecutor
@@ -161,6 +161,27 @@ trait MonthlyReportService extends MongoExecutor[MonthlyReport] {
       val capitalInterests: List[BigDecimal] = transpose(2) map (_.asInstanceOf[BigDecimal]) toList
       val incomes: List[BigDecimal] = transpose(3) map (_.asInstanceOf[BigDecimal]) toList;
       IncomeReport(dates, capitals, capitalInterests, incomes)
+    }
+  }
+
+  def findAssert(startDate: Int, endDate: Int): Future[AssetReport] = {
+    val future = find(startDate, endDate, document("date" -> 1))
+    for {
+      f <- future
+    } yield {
+      val value = f.map(e => Array(e.date.toString, e.capital))
+      val transpose = value.toArray.transpose
+      val dates: List[String] = transpose(0) map (_.toString) toList
+      val capitals: List[Capital] = transpose(1) map (_.asInstanceOf[Capital]) toList
+      val stocks: List[BigDecimal] = capitals.map(e => e.stock.getOrElse(BigDecimal(0)))
+      val stockFunds: List[BigDecimal] = capitals.map(e => e.stockFund.getOrElse(BigDecimal(0)))
+      val indexFunds: List[BigDecimal] = capitals.map(e => e.indexFund.getOrElse(BigDecimal(0)))
+      val bondFunds: List[BigDecimal] = capitals.map(e => e.bondFund.getOrElse(BigDecimal(0)))
+      val monetaryFunds: List[BigDecimal] = capitals.map(e => e.monetaryFund.getOrElse(BigDecimal(0)))
+      val insurances: List[BigDecimal] = capitals.map(e => e.insurance.getOrElse(BigDecimal(0)))
+      val banks: List[BigDecimal] = capitals.map(e => e.bank.getOrElse(BigDecimal(0)))
+      val savings: List[BigDecimal] = capitals.map(e => e.saving.getOrElse(BigDecimal(0)))
+      AssetReport(dates, stocks, stockFunds, indexFunds, bondFunds, monetaryFunds, insurances, banks, savings)
     }
   }
 

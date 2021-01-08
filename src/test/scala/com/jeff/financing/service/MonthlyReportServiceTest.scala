@@ -19,4 +19,15 @@ class MonthlyReportServiceTest {
     Thread.sleep(5000)
   }
 
+  @Test
+  def findAssert(): Unit = {
+    val service = new MonthlyReportService {}
+    val f = service.findAssert(202011, 202012)
+    f onComplete {
+      case Success(value) => println(value)
+      case Failure(exception) => exception.printStackTrace()
+    }
+    Thread.sleep(5000)
+  }
+
 }
