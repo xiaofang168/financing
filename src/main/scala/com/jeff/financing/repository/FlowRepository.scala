@@ -14,9 +14,13 @@ object FlowRepository extends MongoExecutor[Flow] {
     list(0, Int.MaxValue, document("endDate" -> 1))
   }
 
-  def list(startDate: Option[String], endDate: Option[String], category: Option[String]): Future[Vector[Flow]] = {
+  def list(startDate: Option[String], endDate: Option[String], platform: Option[String], category: Option[String]): Future[Vector[Flow]] = {
     // 转换查询需要的数据格式
     val map = Map("startDate" -> str2Int(startDate), "endDate" -> str2Int(endDate),
+      "platform" -> platform.flatMap {
+        case "" => None
+        case c@_ => Some(c)
+      },
       "category" -> category.flatMap {
         case "" => None
         case c@_ => Some(c)
@@ -25,7 +29,6 @@ object FlowRepository extends MongoExecutor[Flow] {
       .map {
         case (key, Some(value)) => key -> value
       }
-
     val doc = BSONDocument(map.map {
       case (k, v) => {
         if ("startDate".equals(k)) {

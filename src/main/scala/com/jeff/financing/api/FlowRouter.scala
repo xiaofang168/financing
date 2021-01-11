@@ -15,8 +15,8 @@ object FlowRouter {
   val route =
     path("flows") {
       get {
-        parameters("start_date".optional, "end_date".optional, "category".optional) { (startDate: Option[String], endDate: Option[String], category: Option[String]) =>
-          complete(flowService.list(startDate, endDate, category))
+        parameters("start_date".optional, "end_date".optional, "platform".optional, "category".optional) { (startDate: Option[String], endDate: Option[String], platform: Option[String], category: Option[String]) =>
+          complete(flowService.list(startDate, endDate, platform, category))
         }
       } ~
         post {

@@ -21,8 +21,8 @@ trait FlowService extends MongoExecutor[Flow] with DataConverter[Flow, FlowItem]
     super.convert2VectorWithFuture(future, handle)
   }
 
-  def list(startDate: Option[String], endDate: Option[String], category: Option[String]): Future[Vector[FlowItem]] = {
-    val future: Future[Vector[Flow]] = FlowRepository.list(startDate, endDate, category)
+  def list(startDate: Option[String], endDate: Option[String], platform: Option[String], category: Option[String]): Future[Vector[FlowItem]] = {
+    val future: Future[Vector[Flow]] = FlowRepository.list(startDate, endDate, platform, category)
     super.convert2VectorWithFuture(future, handle)
   }
 
@@ -93,7 +93,7 @@ trait FlowService extends MongoExecutor[Flow] with DataConverter[Flow, FlowItem]
       stateStr, flow.amount, flow.rate,
       dailyIncome,
       days,
-      dailyIncome.map(e => e * 365),
+      dailyIncome.map(e => e * days),
       stocktakingDateAmount._1,
       stocktakingDateAmount._2,
       flow.target,
