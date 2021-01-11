@@ -28,7 +28,7 @@ case class Flow(_id: Option[BSONObjectID],
                 amount: BigDecimal,
                 rate: Option[BigDecimal],
                 target: String,
-                startDate: Option[Int],
+                startDate: Int,
                 endDate: Option[Int],
                 income: Option[BigDecimal] = None,
                 createTime: Long = System.currentTimeMillis())

@@ -8,7 +8,7 @@ case class CreateFlowCommand(platform: String,
                              amount: BigDecimal,
                              rate: Option[BigDecimal],
                              target: String,
-                             startDate: Option[String],
+                             startDate: String,
                              endDate: Option[String])
 
 object CreateFlowCommandJsonSupport extends LowerCaseWithUnderscores with SprayJsonSupport {
