@@ -8,9 +8,14 @@ import reactivemongo.api.bson.{BSONReader, BSONString, BSONValue, BSONWriter}
 object PlatformEnum extends Enumeration {
   type Platform = Value
   /**
+   * 同花顺
+   */
+  val JQKA,
+
+  /**
    * 阿里
    */
-  val ALI,
+  ALI,
 
   /**
    * 天天基金
@@ -49,6 +54,7 @@ object PlatformEnum extends Enumeration {
 
   def getDesc(platform: Platform): String = {
     platform match {
+      case JQKA => "同花顺"
       case ALI => "阿里"
       case FUND => "天天基金"
       case TENCENT => "腾讯"
