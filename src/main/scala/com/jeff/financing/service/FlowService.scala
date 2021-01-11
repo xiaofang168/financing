@@ -88,10 +88,10 @@ trait FlowService extends MongoExecutor[Flow] with DataConverter[Flow, FlowItem]
       (Some((flow.amount * rate / 100 / 365).setScale(2, RoundingMode.HALF_UP)), daysALlIncome.flatMap(e => e._1), daysALlIncome.flatMap(e => e._2))
     }
 
-    // 盘点金额
-    val stocktakingAmount: BigDecimal = stocktaking match {
-      case Some(e) => e.amount
-      case None => BigDecimal(0)
+    // 盘点日期和金额
+    val stocktakingDateAmount: (String, BigDecimal) = stocktaking match {
+      case Some(e) => (DateTime.parse(e.date.toString, DateTimeFormat.forPattern("yyyyMM")).toString("yyyy-MM"), e.amount)
+      case None => ("未盘点过", BigDecimal(0))
     }
 
     FlowItem(flow._id.get.stringify, flow.platform.toString, PlatformEnum.getDesc(flow.platform),
@@ -99,7 +99,8 @@ trait FlowService extends MongoExecutor[Flow] with DataConverter[Flow, FlowItem]
       stateStr, flow.amount, flow.rate, dailyDaysALlIncome.flatMap(e => e._1),
       dailyDaysALlIncome.flatMap(e => e._2),
       dailyDaysALlIncome.flatMap(e => e._3),
-      stocktakingAmount,
+      stocktakingDateAmount._1,
+      stocktakingDateAmount._2,
       flow.target,
       flow.startDate,
       flow.endDate,

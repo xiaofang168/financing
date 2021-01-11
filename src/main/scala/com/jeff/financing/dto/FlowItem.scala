@@ -15,6 +15,7 @@ case class FlowItem(id: String,
                     dailyIncome: Option[BigDecimal],
                     days: Option[Int],
                     allIncome: Option[BigDecimal],
+                    stocktakingDate: String,
                     stocktakingAmount: BigDecimal,
                     target: String,
                     startDate: Option[Int],
@@ -22,5 +23,5 @@ case class FlowItem(id: String,
                     createTime: String)
 
 object FlowItemJsonSupport extends LowerCaseWithUnderscores with SprayJsonSupport {
-  implicit val flowItemFormats = jsonFormat17(FlowItem)
+  implicit val flowItemFormats = jsonFormat18(FlowItem)
 }
