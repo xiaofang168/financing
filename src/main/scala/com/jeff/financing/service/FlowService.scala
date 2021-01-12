@@ -85,7 +85,7 @@ trait FlowService extends MongoExecutor[Flow] with DataConverter[Flow, FlowItem]
     // 盘点日期和金额
     val stocktakingDateAmount: (String, BigDecimal) = stocktaking match {
       case Some(e) => (new DateTime(e.createTime).toString("yyyy-MM-dd"), e.amount)
-      case None => ("未盘点过", BigDecimal(0))
+      case None => ("未盘点过", flow.amount)
     }
 
     FlowItem(flow._id.get.stringify, flow.platform.toString, PlatformEnum.getDesc(flow.platform),
