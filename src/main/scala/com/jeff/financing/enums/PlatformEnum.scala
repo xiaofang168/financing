@@ -63,6 +63,7 @@ object PlatformEnum extends Enumeration {
       case ALI => "阿里"
       case FUND => "天天基金"
       case TENCENT => "腾讯"
+      case WE_BLANK => "微众银行"
       case BAIDU => "百度"
       case JD => "京东"
       case ICBC => "工行"
