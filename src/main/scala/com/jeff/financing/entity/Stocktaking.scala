@@ -9,6 +9,7 @@ import reactivemongo.api.bson.BSONObjectID
  * @param targetId   资产id
  * @param date       盘点日期yyyyMM,例如202012
  * @param amount     金额
+ * @param rate       利率
  * @param comment    备注
  * @param createTime 创建时间
  */
@@ -17,5 +18,6 @@ case class Stocktaking(_id: Option[BSONObjectID],
                        targetId: String,
                        date: Int,
                        amount: BigDecimal,
+                       rate: Option[BigDecimal] = None,
                        comment: Option[String] = None,
                        createTime: Long = System.currentTimeMillis())
