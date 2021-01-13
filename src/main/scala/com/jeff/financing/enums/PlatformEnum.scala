@@ -28,6 +28,11 @@ object PlatformEnum extends Enumeration {
   TENCENT,
 
   /**
+   * 微众银行
+   */
+  WE_BLANK,
+
+  /**
    * 百度
    */
   BAIDU,
