@@ -10,9 +10,9 @@ import com.jeff.financing.internal.LowerCaseWithUnderscores
  * @param date  日期yyyyMM
  * @param isGen 是否生成0否,1是
  */
-case class MonthlyReportItem(id: Option[String],
-                             date: Int,
-                             isGen: Int)
+final case class MonthlyReportItem(id: Option[String],
+                                   date: Int,
+                                   isGen: Int)
 
 object MonthlyReportItemJsonSupport extends LowerCaseWithUnderscores with SprayJsonSupport {
   implicit val monthlyReportItemFormats = jsonFormat3(MonthlyReportItem)
