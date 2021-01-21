@@ -17,7 +17,7 @@ trait StocktakingService extends MongoExecutor[Stocktaking] with DataConverter[S
   def save(command: CreateStocktakingCommand): Future[Boolean] = {
     // 时间转换为int
     val date = str2Int(command.date)
-    val stocktaking = Stocktaking(None, command.targetId, date, command.amount, command.rate, command.comment, System.currentTimeMillis)
+    val stocktaking = Stocktaking(None, command.targetId, date, command.amount, command.income, command.rate, command.comment, System.currentTimeMillis)
     create(stocktaking)
   }
 
@@ -31,7 +31,7 @@ trait StocktakingService extends MongoExecutor[Stocktaking] with DataConverter[S
         } else {
           val obj = result.get
           val date = str2Int(command.date)
-          val u = Stocktaking(obj._id, obj.targetId, date, command.amount, command.rate, command.comment, obj.createTime)
+          val u = Stocktaking(obj._id, obj.targetId, date, command.amount, command.income, command.rate, command.comment, obj.createTime)
           super.update(id, u)
         }
       }
@@ -64,7 +64,7 @@ trait StocktakingService extends MongoExecutor[Stocktaking] with DataConverter[S
 
   val convert: Stocktaking => StocktakingItem = stocktaking => {
     val dateFormat = DateTime.parse(stocktaking.date.toString, DateTimeFormat.forPattern("yyyyMM")).toString("yyyy-MM")
-    StocktakingItem(stocktaking.targetId, stocktaking._id.get.stringify, dateFormat, stocktaking.amount, stocktaking.rate, new DateTime(stocktaking.createTime).toString("yyyy-MM-dd"), stocktaking.comment)
+    StocktakingItem(stocktaking.targetId, stocktaking._id.get.stringify, dateFormat, stocktaking.amount, stocktaking.income, stocktaking.rate, new DateTime(stocktaking.createTime).toString("yyyy-MM-dd"), stocktaking.comment)
   }
 
 }

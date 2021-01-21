@@ -7,10 +7,11 @@ final case class StocktakingItem(targetId: String,
                                  id: String,
                                  date: String,
                                  amount: BigDecimal,
+                                 income: BigDecimal,
                                  rate: Option[BigDecimal],
                                  createTime: String,
                                  comment: Option[String])
 
 object StocktakingItemJsonSupport extends LowerCaseWithUnderscores with SprayJsonSupport {
-  implicit val stocktakingItemFormats = jsonFormat7(StocktakingItem)
+  implicit val stocktakingItemFormats = jsonFormat8(StocktakingItem)
 }
