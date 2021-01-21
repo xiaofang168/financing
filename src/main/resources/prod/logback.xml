@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <property name="root_log_dir" value="${catalina.base}/logs/"/>
+    <appender name="financingAppender" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <Append>true</Append>
+        <encoder>
+            <pattern>%date [%level] [%thread] %logger{80} [%file : %line] %msg%n</pattern>
+        </encoder>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <maxHistory>14</maxHistory>
+            <FileNamePattern>${root_log_dir}financing.log.%d</FileNamePattern>
+        </rollingPolicy>
+    </appender>
+    <logger name="reactivemongo" level="ERROR"/>
+    <root level="INFO">
+        <appender-ref ref="financingAppender"/>
+    </root>
+</configuration>
