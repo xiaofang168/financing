@@ -11,7 +11,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.language.postfixOps
 import scala.util.{Failure, Success}
 
-class FlowServiceTest {
+class FlowServiceTst {
 
   @Test
   def list(): Unit = {

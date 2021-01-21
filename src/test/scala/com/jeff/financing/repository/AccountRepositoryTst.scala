@@ -10,7 +10,7 @@ import scala.concurrent.{Await, Future}
 import scala.language.postfixOps
 import scala.util.{Failure, Success}
 
-class AccountRepositoryTest {
+class AccountRepositoryTst {
 
   @Test
   def findOne(): Unit = {
