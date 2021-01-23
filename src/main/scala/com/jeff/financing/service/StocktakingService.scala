@@ -1,5 +1,6 @@
 package com.jeff.financing.service
 
+import cats.data.OptionT
 import com.jeff.financing.dto.{CreateStocktakingCommand, StocktakingItem}
 import com.jeff.financing.entity.Stocktaking
 import com.jeff.financing.repository.MongoExecutor
@@ -45,8 +46,9 @@ trait StocktakingService extends MongoExecutor[Stocktaking] with DataConverter[S
     super.convert2Vector(future, this.convert)
   }
 
-  def findOne(targetId: String): Future[Option[Stocktaking]] = {
-    findOne(document("targetId" -> targetId), document("date" -> -1))
+  def findOne(targetId: String): OptionT[Future, Stocktaking] = {
+    val a = findOne(document("targetId" -> targetId), document("date" -> -1))
+    OptionT(a)
   }
 
   def find(targetId: String): Future[Vector[StocktakingItem]] = {

@@ -1,5 +1,6 @@
 package com.jeff.financing.service
 
+import cats.data.OptionT
 import com.jeff.financing.dto.{CreateFlowCommand, FlowItem}
 import com.jeff.financing.entity.{Flow, Stocktaking}
 import com.jeff.financing.enums.{CategoryEnum, PlatformEnum}
@@ -67,9 +68,8 @@ trait FlowService extends MongoExecutor[Flow] with DataConverter[Flow, FlowItem]
   }
 
   val handle: Flow => Future[FlowItem] = flow => {
-    val f: Future[Option[Stocktaking]] = stocktakingService.findOne(flow._id.get.stringify)
-    val fi: Future[FlowItem] = f.map(r => converter(flow, r))
-    fi
+    val f: OptionT[Future, Stocktaking] = stocktakingService.findOne(flow._id.get.stringify)
+    f.map(e => converter(flow, Some(e))).getOrElse(converter(flow, None))
   }
 
   private def converter(flow: Flow, stocktaking: Option[Stocktaking]): FlowItem = {
