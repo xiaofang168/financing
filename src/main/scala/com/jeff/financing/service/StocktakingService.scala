@@ -17,8 +17,12 @@ trait StocktakingService extends MongoExecutor[Stocktaking] with DataConverter[S
 
   def save(command: CreateStocktakingCommand): Future[Boolean] = {
     // 时间转换为int
-    val date = str2Int(command.date)
-    val stocktaking = Stocktaking(None, command.targetId, date, command.amount, command.income, command.rate, command.comment, System.currentTimeMillis)
+    import io.scalaland.chimney.dsl._
+    val stocktaking = command.into[Stocktaking]
+      .withFieldConst(_._id, None)
+      .withFieldComputed(_.date, _ => str2Int(command.date))
+      .withFieldComputed(_.createTime, _ => System.currentTimeMillis)
+      .transform
     create(stocktaking)
   }
 
