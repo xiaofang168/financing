@@ -75,17 +75,21 @@ trait MonthlyReportService extends MongoExecutor[MonthlyReport] {
     val a: Future[Future[Boolean]] = f flatMap {
       case Some(_) => Future(Future(false))
       case None => {
+        // 并行计算
+        val a = findAllFlow()
+        val b = findAllStocktaking(date)
+        val c = findAllStocktaking(lastDate)
         for {
-          flows <- findAllFlow()
-          stocktaking <- findAllStocktaking(date)
-          lastStocktaking <- findAllStocktaking(lastDate)
+          flows <- a
+          stocktaking <- b
+          lastStocktaking <- c
         } yield {
           // 计算本金和
-          val capitalSum: BigDecimal = flows.map(e => e.amount).sum
+          val capitalSum: BigDecimal = flows.map(_.amount).sum
 
           // 已经盘点的资金和
-          val hadStocktakingCapitalInterestSum = stocktaking.map(e => e.amount).sum
-          val targetIds = stocktaking.map(e => e.targetId)
+          val hadStocktakingCapitalInterestSum = stocktaking.map(_.amount).sum
+          val targetIds = stocktaking.map(_.targetId)
           // 未进行当月盘点的资金
           val noStocktakingCapitalInterestSum = flows.filter(e => !targetIds.contains(e._id.get.stringify)).map(e => e.amount).sum
 
@@ -93,12 +97,12 @@ trait MonthlyReportService extends MongoExecutor[MonthlyReport] {
           val capitalInterestSum = hadStocktakingCapitalInterestSum + noStocktakingCapitalInterestSum
 
           // 分类本金组
-          val categoryFlowAmountCountMap: Map[String, BigDecimal] = flows.groupBy(e => e.category.toString)
+          val categoryFlowAmountCountMap: Map[String, BigDecimal] = flows.groupBy(_.category.toString)
             .view
             .mapValues(_.map(_.amount).sum)
             .toMap
           // 类别对应的资产id
-          val categoryFlowIdsMap: Map[String, List[String]] = flows.groupBy(e => e.category.toString).view.mapValues(_.map(_._id.get.stringify)).toMap
+          val categoryFlowIdsMap: Map[String, List[String]] = flows.groupBy(_.category.toString).view.mapValues(_.map(_._id.get.stringify)).toMap
           // 按照类别对应的标的id进行统计
           val clCFSAmountMap: Map[String, (BigDecimal, BigDecimal)] = categoryFlowIdsMap.map { e =>
             // 当前月标的对应的盘点总金额
