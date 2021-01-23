@@ -1,17 +1,19 @@
 package com.jeff.financing.service
 
 import cats.data.OptionT
-import com.jeff.financing.dto.{CreateStocktakingCommand, StocktakingItem}
+import com.jeff.financing.dto.{CreateStocktakingCommand, StocktakingItem, StocktakingStats}
 import com.jeff.financing.entity.Stocktaking
 import com.jeff.financing.repository.MongoExecutor
-import com.jeff.financing.repository.PersistenceImplicits.{stocktakingWriter, _}
+import com.jeff.financing.repository.PersistenceImplicits.{stocktakingReader, stocktakingWriter}
 import com.jeff.financing.str2Int
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
-import reactivemongo.api.bson.document
+import reactivemongo.api.Cursor
+import reactivemongo.api.bson.{BSONDocument, BSONDocumentReader, BSONString, document}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import scala.reflect.ClassTag
 
 trait StocktakingService extends MongoExecutor[Stocktaking] with DataConverter[Stocktaking, StocktakingItem] {
 
@@ -58,6 +60,30 @@ trait StocktakingService extends MongoExecutor[Stocktaking] with DataConverter[S
   def find(targetId: String): Future[Vector[StocktakingItem]] = {
     val future = list(0, Int.MaxValue, document("targetId" -> targetId), document("date" -> -1))
     super.convert2Vector(future, this.convert)
+  }
+
+  /**
+   * 统计资产最新的盘点记录
+   *
+   * @param mat
+   * @param m
+   * @param tag
+   * @return
+   */
+  def aggregate(mat: BSONDocument)(implicit m: BSONDocumentReader[StocktakingStats], tag: ClassTag[Stocktaking]) = {
+    exec(coll => {
+      import coll.AggregationFramework.{Descending, FirstField, Group, Match, Project, Sort}
+      val pipeline = List(Match(mat),
+        Sort(Descending("date")),
+        Project(document("date" -> 1, "amount" -> 1, "targetId" -> 1)),
+        Group(BSONString("$targetId"))(
+          "date" -> FirstField("date"),
+          "amount" -> FirstField("amount")))
+      coll.aggregatorContext[StocktakingStats](pipeline)
+        .prepared
+        .cursor
+        .collect[Vector](Int.MaxValue, Cursor.FailOnError[Vector[StocktakingStats]]())
+    })
   }
 
   def getById(id: String) = {

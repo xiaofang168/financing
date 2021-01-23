@@ -2,6 +2,7 @@ package com.jeff.financing.service
 
 import com.jeff.financing.dto.CreateStocktakingCommand
 import org.junit.Test
+import reactivemongo.api.bson.document
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.language.postfixOps
@@ -24,6 +25,18 @@ class StocktakingServiceTst {
   def delById(): Unit = {
     val stocktakingService = new StocktakingService {}
     val f = stocktakingService.delById("5faf475f5259308b1195463d")
+    f onComplete {
+      case Success(value) => println(value)
+      case Failure(exception) => exception.printStackTrace()
+    }
+    Thread.sleep(5000)
+  }
+
+  @Test
+  def aggregate(): Unit = {
+    import com.jeff.financing.repository.PersistenceImplicits.stocktakingStatsReader
+    val stocktakingService = new StocktakingService {}
+    val f = stocktakingService.aggregate(document("targetId" -> document("$in" -> List("1", "2"))))
     f onComplete {
       case Success(value) => println(value)
       case Failure(exception) => exception.printStackTrace()
