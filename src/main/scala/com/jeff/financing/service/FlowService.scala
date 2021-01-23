@@ -1,13 +1,14 @@
 package com.jeff.financing.service
 
 import cats.data.OptionT
-import com.jeff.financing.dto.{CreateFlowCommand, FlowItem}
+import com.jeff.financing.dto.{CreateFlowCommand, FlowItem, StocktakingStats}
 import com.jeff.financing.entity.{Flow, Stocktaking}
 import com.jeff.financing.enums.{CategoryEnum, PlatformEnum}
 import com.jeff.financing.repository.PersistenceImplicits._
 import com.jeff.financing.repository.{FlowRepository, MongoExecutor}
 import org.joda.time.format.DateTimeFormat
 import org.joda.time.{DateTime, Days}
+import reactivemongo.api.bson.document
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -17,14 +18,14 @@ trait FlowService extends MongoExecutor[Flow] with DataConverter[Flow, FlowItem]
 
   val stocktakingService = new StocktakingService {}
 
-  def list(): Future[Vector[FlowItem]] = {
+  def list(): Future[List[FlowItem]] = {
     val future: Future[Vector[Flow]] = FlowRepository.list()
-    super.convert2VectorWithFuture(future, handle)
+    super.convert2ListWithFuture(future, handles)
   }
 
-  def list(startDate: Option[String], endDate: Option[String], platform: Option[String], category: Option[String]): Future[Vector[FlowItem]] = {
+  def list(startDate: Option[String], endDate: Option[String], platform: Option[String], category: Option[String]): Future[List[FlowItem]] = {
     val future: Future[Vector[Flow]] = FlowRepository.list(startDate, endDate, platform, category)
-    super.convert2VectorWithFuture(future, handle)
+    super.convert2ListWithFuture(future, handles)
   }
 
   def save(command: CreateFlowCommand) = {
@@ -69,10 +70,21 @@ trait FlowService extends MongoExecutor[Flow] with DataConverter[Flow, FlowItem]
 
   val handle: Flow => Future[FlowItem] = flow => {
     val f: OptionT[Future, Stocktaking] = stocktakingService.findOne(flow._id.get.stringify)
-    f.map(e => converter(flow, Some(e))).getOrElse(converter(flow, None))
+    f.map(e => converter(flow, Some(StocktakingStats(e.targetId, e.date, e.amount, e.createTime)))).getOrElse(converter(flow, None))
   }
 
-  private def converter(flow: Flow, stocktaking: Option[Stocktaking]): FlowItem = {
+  val handles: List[Flow] => Future[List[FlowItem]] = flows => {
+    val targetIds = flows.map(e => e._id.get.stringify)
+    val future: Future[Vector[StocktakingStats]] = stocktakingService.aggregate(document("targetId" -> document("$in" -> targetIds)))
+    for {
+      stocktakingStats <- future
+    } yield {
+      val stocktakingStatsMap = stocktakingStats.map(e => (e._id, e)).toMap
+      flows.map(flow => converter(flow, stocktakingStatsMap.get(flow._id.get.stringify)))
+    }
+  }
+
+  private def converter(flow: Flow, stocktaking: Option[StocktakingStats]): FlowItem = {
     val stateStr = if (flow.state == 1) "存入" else "取出"
 
     // 经过的天数

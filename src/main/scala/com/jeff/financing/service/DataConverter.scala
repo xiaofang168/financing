@@ -26,6 +26,15 @@ trait DataConverter[T, R] {
     r.flatten
   }
 
+  def convert2ListWithFuture(future: Future[Vector[T]], fn: List[T] => Future[List[R]]): Future[List[R]] = {
+    val r = for {
+      result <- future
+    } yield {
+      fn(result.toList)
+    }
+    r.flatten
+  }
+
   def convert2Obj(future: Future[Option[T]], fn: T => R): Future[Option[R]] = {
     for {
       result <- future
