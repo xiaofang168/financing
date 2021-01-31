@@ -105,12 +105,19 @@ trait MonthlyReportService extends MongoExecutor[MonthlyReport] {
           val categoryFlowIdsMap: Map[String, List[String]] = flows.groupBy(_.category.toString).view.mapValues(_.map(_._id.get.stringify)).toMap
           // 按照类别对应的标的id进行统计
           val clCFSAmountMap: Map[String, (BigDecimal, BigDecimal)] = categoryFlowIdsMap.map { e =>
-            // 当前月标的对应的盘点总金额
-            val a = stocktaking.filter(s => e._2.contains(s.targetId)).map(_.amount).sum
-            // 上个月标的对应的盘点总金额
-            val b = lastStocktaking.filter(s => e._2.contains(s.targetId)).map(_.amount).sum
+            // 当前月标的对应的盘点总金额和收益总金额
+            val sums: (BigDecimal, BigDecimal) = stocktaking
+              .filter(s => e._2.contains(s.targetId))
+              .foldLeft(BigDecimal(0), BigDecimal(0))((x, item) => (x._1 + item.amount, x._2 + item.income))
+            // 上月未盘点过,直接取填的收益
+            val b = if (lastStocktaking.size == 0) {
+              sums._2
+            } else {
+              // 上个月标的对应的盘点总金额
+              sums._1 - lastStocktaking.filter(s => e._2.contains(s.targetId)).map(_.amount).sum
+            }
             // 类别对应的盘点收益
-            e._1 -> (a, a - b)
+            e._1 -> (sums._1, b)
           }
 
           // 本金
