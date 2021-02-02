@@ -38,7 +38,7 @@ trait StocktakingService extends MongoExecutor[Stocktaking] with DataConverter[S
         } else {
           val obj = result.get
           val date = str2Int(command.date)
-          val u = Stocktaking(obj._id, obj.targetId, date, command.amount, command.income, command.rate, command.comment, obj.createTime)
+          val u = Stocktaking(obj._id, obj.targetId, date, command.amount, command.income, command.totalIncome, command.rate, command.comment, obj.createTime)
           super.update(id, u)
         }
       }
