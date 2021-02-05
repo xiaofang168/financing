@@ -6,14 +6,12 @@ import ch.qos.logback.classic.LoggerContext
 import ch.qos.logback.classic.joran.JoranConfigurator
 import ch.qos.logback.core.util.StatusPrinter
 import org.slf4j.LoggerFactory
-import zio.internal.Platform
-import zio.{ExitCode, IO, Runtime, Task, URIO, ZEnv, ZIO, console, _}
+import zio.{ExitCode, IO, Task, URIO, ZEnv, ZIO, console, _}
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.language.postfixOps
 
 object BootStart extends App {
-  private val runtime = Runtime(ActorEnvLive, Platform.default)
 
   private val bindTask: ActorSystem => Task[Future[Http.ServerBinding]] = { system =>
     implicit val sys: ActorSystem = system
