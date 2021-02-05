@@ -2,15 +2,17 @@ package com.jeff.financing.api
 
 
 import akka.http.scaladsl.server.Directives._
+import com.jeff.financing.api.ZioSupport._
 import com.jeff.financing.dto.CreateFlowCommand
 import com.jeff.financing.dto.FlowItemJsonSupport._
 import com.jeff.financing.internal.FutureConverterImplicits._
 import com.jeff.financing.service.FlowService
+import zio._
 
 import scala.concurrent.Future
+import scala.language.postfixOps
 
 object FlowRouter {
-
   val flowService = new FlowService {}
   val route =
     path("flows") {
@@ -37,8 +39,9 @@ object FlowRouter {
         put {
           import com.jeff.financing.dto.CreateFlowCommandJsonSupport._
           entity(as[CreateFlowCommand]) { command =>
-            val result: Future[Map[String, String]] = flowService.update(id, command)
-            complete(result)
+            val result = flowService.update(id, command)
+            val value: ZIO[Any, Throwable, Map[String, String]] = result.map(e => Map("data" -> e.toString))
+            complete(value)
           }
         }
     }

@@ -9,6 +9,7 @@ import com.jeff.financing.repository.{FlowRepository, MongoExecutor}
 import org.joda.time.format.DateTimeFormat
 import org.joda.time.{DateTime, Days}
 import reactivemongo.api.bson.document
+import zio.ZIO
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -35,9 +36,10 @@ trait FlowService extends MongoExecutor[Flow] with DataConverter[Flow, FlowItem]
     FlowRepository.create(flow)
   }
 
-  def update(id: String, command: CreateFlowCommand): Future[Int] = {
+  def update(id: String, command: CreateFlowCommand): ZIO[Any, Throwable, Int] = {
     val obj = FlowRepository.get(id)
-    for {
+
+    val a: Future[Int] = for {
       result <- obj
       out <- {
         if (result.isEmpty) {
@@ -53,6 +55,8 @@ trait FlowService extends MongoExecutor[Flow] with DataConverter[Flow, FlowItem]
     } yield {
       out
     }
+
+    ZIO.fromFuture(_ => a)
   }
 
   def save(flow: Flow) = {

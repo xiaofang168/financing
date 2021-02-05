@@ -2,6 +2,8 @@ package com.jeff.financing.api
 
 import akka.http.scaladsl.model.{ContentTypes, HttpEntity}
 import akka.http.scaladsl.server.Directives._
+import com.jeff.financing.api.ZioSupport._
+import zio.{Task, ZIO}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -16,7 +18,9 @@ object IndexRouter {
   val route =
     path("index") {
       get {
-        complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, "<h1>Say hello to akka-http</h1>"))
+        val a = HttpEntity(ContentTypes.`text/html(UTF-8)`, "<h1>Say hello to akka-http</h1>")
+        val value: Task[HttpEntity.Strict] = ZIO(a)
+        complete(value)
       }
     } ~
       path("divide" / IntNumber / IntNumber) { (a, b) =>
