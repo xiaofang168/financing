@@ -97,7 +97,7 @@ trait StocktakingService extends MongoExecutor[Stocktaking] with DataConverter[S
 
   val convert: Stocktaking => StocktakingItem = stocktaking => {
     val dateFormat = DateTime.parse(stocktaking.date.toString, DateTimeFormat.forPattern("yyyyMM")).toString("yyyy-MM")
-    StocktakingItem(stocktaking.targetId, stocktaking._id.get.stringify, dateFormat, stocktaking.amount, stocktaking.income, stocktaking.rate, new DateTime(stocktaking.createTime).toString("yyyy-MM-dd"), stocktaking.comment)
+    StocktakingItem(stocktaking.targetId, stocktaking._id.get.stringify, dateFormat, stocktaking.amount, stocktaking.income, stocktaking.totalIncome, stocktaking.rate, new DateTime(stocktaking.createTime).toString("yyyy-MM-dd"), stocktaking.comment)
   }
 
 }
