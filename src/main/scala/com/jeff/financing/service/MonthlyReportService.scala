@@ -1,6 +1,7 @@
 package com.jeff.financing.service
 
 
+import cats.implicits._
 import com.jeff.financing.dto.{AssetReport, IncomeReport, MonthlyReportItem, MonthlyReportRow}
 import com.jeff.financing.entity.{Flow, MonthlyReport, Stocktaking}
 import com.jeff.financing.enums.CategoryEnum
@@ -78,19 +79,18 @@ trait MonthlyReportService extends MongoExecutor[MonthlyReport] {
         // 并行计算
         val a = findAllFlow()
         val b = findAllStocktaking(date)
-        val c = findAllStocktaking(lastDate)
         for {
           flows <- a
-          stocktaking <- b
-          lastStocktaking <- c
+          stocktakingList <- b
         } yield {
           // 计算本金和
           val capitalSum: BigDecimal = flows.map(_.amount).sum
 
           // 已经盘点的资金和
-          val hadStocktakingCapitalInterestSum = stocktaking.map(_.amount).sum
-          val targetIds = stocktaking.map(_.targetId)
+          val hadStocktakingCapitalInterestSum = stocktakingList.map(_.amount).sum
+
           // 未进行当月盘点的资金
+          val targetIds = stocktakingList.map(_.targetId)
           val noStocktakingCapitalInterestSum = flows.filter(e => !targetIds.contains(e._id.get.stringify)).map(e => e.amount).sum
 
           // 计算本息和
@@ -103,22 +103,33 @@ trait MonthlyReportService extends MongoExecutor[MonthlyReport] {
             .toMap
           // 类别对应的资产id
           val categoryFlowIdsMap: Map[String, List[String]] = flows.groupBy(_.category.toString).view.mapValues(_.map(_._id.get.stringify)).toMap
-          // 按照类别对应的标的id进行统计
+
+          // 按照类别对应的标的id进行统计(类别->盘点金额和&盘点收益和)
           val clCFSAmountMap: Map[String, (BigDecimal, BigDecimal)] = categoryFlowIdsMap.map { e =>
+            // 当前类别盘点过标的集合
+            val stockingTarget: List[Stocktaking] = stocktakingList.filter(s => e._2.contains(s.targetId))
+
+            // 当前类别没有盘点过的标的id集合
+            val notStockingTargetIds: List[String] = e._2.diff(stockingTarget.map(_.targetId))
+
             // 当前月标的对应的盘点总金额和收益总金额
-            val sums: (BigDecimal, BigDecimal) = stocktaking
-              .filter(s => e._2.contains(s.targetId))
+            val stockingSums: (BigDecimal, BigDecimal) = stockingTarget
               .foldLeft(BigDecimal(0), BigDecimal(0))((x, item) => (x._1 + item.amount, x._2 + item.income))
-            // 上月未盘点过,直接取填的收益
-            val b = if (lastStocktaking.size == 0) {
-              sums._2
-            } else {
-              // 上个月标的对应的盘点总金额
-              sums._1 - lastStocktaking.filter(s => e._2.contains(s.targetId)).map(_.amount).sum
-            }
-            // 类别对应的盘点收益
-            e._1 -> (sums._1, b)
+
+            // 当前月标的未盘点过的总金额和收益总金额
+            val notStockingSums: (BigDecimal, BigDecimal) = flows
+              .filter(e => notStockingTargetIds.contains(e._id.get.stringify))
+              .foldLeft(BigDecimal(0), BigDecimal(0))((x, item) => (x._1 + item.amount, x._2 + 0))
+
+            // 当月盘点过和未盘点过的总金额(盘点金额和收益)
+            val sums = stockingSums |+| notStockingSums
+
+            // 当月类别对应的盘点
+            e._1 -> (sums._1, sums._2)
           }
+
+          // 计算盘点的收益和
+          val incomeSum: BigDecimal = clCFSAmountMap.values.map(e => e._2).sum
 
           // 本金
           val capital = Capital(categoryFlowAmountCountMap.get(CategoryEnum.STOCK.toString),
@@ -150,7 +161,7 @@ trait MonthlyReportService extends MongoExecutor[MonthlyReport] {
             clCFSAmountMap.get(CategoryEnum.BANK.toString).map(_._2),
             clCFSAmountMap.get(CategoryEnum.SAVING.toString).map(_._2))
 
-          val monthlyReport = MonthlyReport(None, date, capitalSum, capitalInterestSum, capitalInterestSum - capitalSum, capital, capitalInterest, income)
+          val monthlyReport = MonthlyReport(None, date, capitalSum, capitalInterestSum, incomeSum, capital, capitalInterest, income)
 
           // 生成月报
           create(monthlyReport)
