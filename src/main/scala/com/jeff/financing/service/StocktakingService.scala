@@ -75,10 +75,11 @@ trait StocktakingService extends MongoExecutor[Stocktaking] with DataConverter[S
       import coll.AggregationFramework.{Descending, FirstField, Group, Match, Project, Sort}
       val pipeline = List(Match(mat),
         Sort(Descending("date")),
-        Project(document("date" -> 1, "amount" -> 1, "targetId" -> 1, "createTime" -> 1)),
+        Project(document("date" -> 1, "amount" -> 1, "income" -> 1, "targetId" -> 1, "createTime" -> 1)),
         Group(BSONString("$targetId"))(
           "date" -> FirstField("date"),
           "amount" -> FirstField("amount"),
+          "income" -> FirstField("income"),
           "createTime" -> FirstField("createTime")))
       coll.aggregatorContext[StocktakingStats](pipeline)
         .prepared

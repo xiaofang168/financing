@@ -74,7 +74,7 @@ trait FlowService extends MongoExecutor[Flow] with DataConverter[Flow, FlowItem]
 
   val handle: Flow => Future[FlowItem] = flow => {
     val f: OptionT[Future, Stocktaking] = stocktakingService.findOne(flow._id.get.stringify)
-    f.map(e => converter(flow, Some(StocktakingStats(e.targetId, e.date, e.amount, e.createTime)))).getOrElse(converter(flow, None))
+    f.map(e => converter(flow, Some(StocktakingStats(e.targetId, e.date, e.amount, e.income, e.createTime)))).getOrElse(converter(flow, None))
   }
 
   val handles: List[Flow] => Future[List[FlowItem]] = flows => {
@@ -112,6 +112,7 @@ trait FlowService extends MongoExecutor[Flow] with DataConverter[Flow, FlowItem]
       dailyIncome.map(e => e * days),
       stocktakingDateAmount._1,
       stocktakingDateAmount._2,
+      stocktaking.map(e => e.income).getOrElse(0),
       flow.target,
       flow.startDate,
       flow.endDate,

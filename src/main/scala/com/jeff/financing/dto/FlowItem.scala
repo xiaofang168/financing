@@ -17,11 +17,12 @@ final case class FlowItem(id: String,
                           allIncome: Option[BigDecimal],
                           stocktakingDate: String,
                           stocktakingAmount: BigDecimal,
+                          stocktakingIncome: BigDecimal,
                           target: String,
                           startDate: Int,
                           endDate: Option[Int],
                           createTime: String)
 
 object FlowItemJsonSupport extends LowerCaseWithUnderscores with SprayJsonSupport {
-  implicit val flowItemFormats = jsonFormat18(FlowItem)
+  implicit val flowItemFormats = jsonFormat19(FlowItem)
 }
