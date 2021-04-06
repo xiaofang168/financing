@@ -14,14 +14,17 @@ object ZioSupport {
     Marshaller { implicit ec =>
       a => {
         val r = a.foldM(
-          e => IO.fromFuture(implicit ec => m2(e)),
-          a => IO.fromFuture(implicit ec => m1(a))
+          err => IO.fromFuture(implicit ec => m2(err)),
+          suc => IO.fromFuture(implicit ec => m1(suc))
         )
 
         val p = Promise[List[Marshalling[HttpResponse]]]()
 
         Runtime.default.unsafeRunAsync(r) { exit =>
-          exit.fold(e => p.failure(e.squash), s => p.success(s))
+          exit.fold(
+            failed => p.failure(failed.squash),
+            success => p.success(success)
+          )
         }
 
         p.future
