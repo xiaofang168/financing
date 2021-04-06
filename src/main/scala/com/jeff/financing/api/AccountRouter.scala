@@ -3,9 +3,9 @@ package com.jeff.financing.api
 import akka.http.scaladsl.server.Directives._
 import com.jeff.financing.api.ZioSupport._
 import com.jeff.financing.entity.AccountJsonSupport._
-import com.jeff.financing.service.{AccountService, ZAccount}
+import com.jeff.financing.service.ZAccount
 
-object AccountRouter extends AccountService {
+object AccountRouter {
 
   val route =
     path("accounts" / Remaining) { id =>
