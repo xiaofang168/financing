@@ -5,8 +5,6 @@ import com.jeff.financing.repository.AccountRepository
 import com.jeff.financing.repository.PersistenceImplicits._
 import zio.{Has, Task, ZIO, ZLayer}
 
-import scala.concurrent.Future
-
 /**
  * <pre>
  * From my experience it is a real joy to write code with ZIO,
@@ -25,24 +23,12 @@ object ZAccount {
   }
 
   val live: ZLayer[Any, Nothing, ZAccountEnv] = ZLayer.succeed(new Service {
-    override def get(id: String): Task[Option[Account]] = ZIO.fromFuture(_ => AccountRepository.get(id))
+    override def get(id: String): Task[Option[Account]] = AccountRepository.get(id)
 
-    override def save(user: Account): Task[Boolean] = ZIO.fromFuture(_ => AccountRepository.create(user))
+    override def save(user: Account): Task[Boolean] = AccountRepository.create(user)
   })
 
   def get(id: String): ZIO[ZAccountEnv, Throwable, Option[Account]] = ZIO.accessM(_.get.get(id))
 
   def save(user: Account): ZIO[ZAccountEnv, Throwable, Boolean] = ZIO.accessM(_.get.save(user))
-}
-
-trait AccountService {
-
-  def save(user: Account): Future[Boolean] = {
-    AccountRepository.create(user)
-  }
-
-  def get(id: String): Future[Option[Account]] = {
-    AccountRepository.get(id)
-  }
-
 }
