@@ -12,7 +12,7 @@ import zio.{Task, ZIO}
 
 import scala.math.BigDecimal.RoundingMode
 
-trait FlowService extends ZioMongoExecutor[Flow] with DataConverter[Flow, FlowItem] {
+trait FlowService extends ZioMongoExecutor[Flow] {
 
   val stocktakingService = new StocktakingService {}
 

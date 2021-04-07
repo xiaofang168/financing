@@ -21,7 +21,6 @@ trait MonthlyReportService extends ZioMongoExecutor[MonthlyReport] {
   val stocktakingService: StocktakingService = new StocktakingService {}
 
   def detail(date: Int): Task[List[MonthlyReportRow]] = {
-    val a = new DataConverter[MonthlyReport, List[MonthlyReportRow]] {}
     for {
       r <- super.findOne(document("date" -> date))
     } yield {

@@ -14,7 +14,7 @@ import zio.Task
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.reflect.ClassTag
 
-trait StocktakingService extends ZioMongoExecutor[Stocktaking] with DataConverter[Stocktaking, StocktakingItem] {
+trait StocktakingService extends ZioMongoExecutor[Stocktaking] {
 
   def save(command: CreateStocktakingCommand): Task[Boolean] = {
     // 时间转换为int
