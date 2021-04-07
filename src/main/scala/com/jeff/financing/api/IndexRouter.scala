@@ -2,7 +2,7 @@ package com.jeff.financing.api
 
 import akka.http.scaladsl.model.{ContentTypes, HttpEntity}
 import akka.http.scaladsl.server.Directives._
-import com.jeff.financing.api.ZioSupport._
+import com.jeff.financing.dto.ZioSupport._
 import zio.{Task, ZIO}
 
 import scala.concurrent.ExecutionContext.Implicits.global

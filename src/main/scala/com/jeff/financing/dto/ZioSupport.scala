@@ -1,14 +1,32 @@
-package com.jeff.financing.api
+package com.jeff.financing.dto
 
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.marshalling.{Marshaller, Marshalling}
 import akka.http.scaladsl.model.HttpResponse
-import zio.{IO, Runtime}
+import com.jeff.financing.internal.LowerCaseWithUnderscores
+import zio.{IO, Runtime, Task}
 
 import scala.concurrent.Promise
-import scala.language.implicitConversions
 
+case class JsonResult(data: String)
 
 object ZioSupport {
+
+  object JsonResultSupport extends LowerCaseWithUnderscores with SprayJsonSupport {
+    implicit val jsonResultFormats = jsonFormat1(JsonResult)
+  }
+
+  implicit class intTask2Map(x: Task[Int]) {
+    //增加括号
+    def toJson: Task[JsonResult] = x map { e =>
+      JsonResult(e.toString)
+    }
+  }
+
+  implicit class booleanTask2Map(x: Task[Boolean]) {
+    //增加括号
+    def toJson: Task[JsonResult] = for (e <- x) yield JsonResult(e.toString)
+  }
 
   implicit def zioMarshaller[A, E](implicit m1: Marshaller[A, HttpResponse], m2: Marshaller[E, HttpResponse]): Marshaller[IO[E, A], HttpResponse] =
     Marshaller { implicit ec =>

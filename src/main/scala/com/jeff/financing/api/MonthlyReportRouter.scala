@@ -1,8 +1,7 @@
 package com.jeff.financing.api
 
 import akka.http.scaladsl.server.Directives.{path, _}
-import com.jeff.financing.api.ZioSupport._
-import com.jeff.financing.dto.MonthlyReportItemJsonSupport._
+import com.jeff.financing.dto.ZioSupport._
 import com.jeff.financing.service.MonthlyReportService
 import zio.Task
 
@@ -40,9 +39,9 @@ object MonthlyReportRouter {
       }
     } ~ path("monthly" / "report" / "gen" / IntNumber) { date =>
       get {
-        import com.jeff.financing.internal.ResConverterImplicits._
-        val result: Task[Map[String, String]] = service.gen(date)
-        complete(result)
+        import com.jeff.financing.dto.ZioSupport.JsonResultSupport._
+        val result: Task[Boolean] = service.gen(date)
+        complete(result.toJson)
       }
     } ~ path("monthly" / "report" / IntNumber) { date =>
       get {

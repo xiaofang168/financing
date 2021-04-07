@@ -1,10 +1,9 @@
 package com.jeff.financing.api
 
 import akka.http.scaladsl.server.Directives._
-import com.jeff.financing.api.ZioSupport._
 import com.jeff.financing.dto.CreateStocktakingCommand
 import com.jeff.financing.dto.StocktakingItemJsonSupport._
-import com.jeff.financing.internal.ResConverterImplicits._
+import com.jeff.financing.dto.ZioSupport._
 import com.jeff.financing.service.StocktakingService
 import zio.Task
 
@@ -24,20 +23,23 @@ object StocktakingRouter {
         post {
           import com.jeff.financing.dto.CreateStocktakingJsonSupport._
           entity(as[CreateStocktakingCommand]) { command =>
-            val result: Task[Map[String, String]] = stocktakingService.save(command)
-            complete(result)
+            import com.jeff.financing.dto.ZioSupport.JsonResultSupport._
+            val result = stocktakingService.save(command)
+            complete(result.toJson)
           }
         }
     } ~ path("stocktaking" / Remaining) { id =>
       delete {
-        val result: Task[Map[String, String]] = stocktakingService.delById(id)
-        complete(result)
+        import com.jeff.financing.dto.ZioSupport.JsonResultSupport._
+        val result: Task[Int] = stocktakingService.delById(id)
+        complete(result.toJson)
       } ~
         put {
           import com.jeff.financing.dto.CreateStocktakingJsonSupport._
           entity(as[CreateStocktakingCommand]) { command =>
-            val result: Task[Map[String, String]] = stocktakingService.update(id, command)
-            complete(result)
+            import com.jeff.financing.dto.ZioSupport.JsonResultSupport._
+            val result: Task[Int] = stocktakingService.update(id, command)
+            complete(result.toJson)
           }
         }
     }

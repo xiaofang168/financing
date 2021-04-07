@@ -1,46 +1,54 @@
 package com.jeff.financing.api
 
-
 import akka.http.scaladsl.server.Directives._
-import com.jeff.financing.api.ZioSupport._
-import com.jeff.financing.dto.CreateFlowCommand
 import com.jeff.financing.dto.FlowItemJsonSupport._
-import com.jeff.financing.internal.ResConverterImplicits._
-import com.jeff.financing.service.FlowService
+import com.jeff.financing.dto.ZioSupport._
+import com.jeff.financing.dto.{CreateFlowCommand, FlowItem}
+import com.jeff.financing.service.ZFlow
 import zio._
 
 import scala.language.postfixOps
 
 object FlowRouter {
-  val flowService = new FlowService {}
+
   val route =
     path("flows") {
       get {
         parameters("start_date".optional, "end_date".optional, "platform".optional, "category".optional) { (startDate: Option[String], endDate: Option[String], platform: Option[String], category: Option[String]) =>
-          complete(flowService.list(startDate, endDate, platform, category))
+          val result = ZFlow
+            .list(startDate, endDate, platform, category)
+            .provideLayer(ZFlow.live)
+          complete(result)
         }
       } ~
         post {
           import com.jeff.financing.dto.CreateFlowCommandJsonSupport._
           entity(as[CreateFlowCommand]) { command =>
-            val result: Task[Map[String, String]] = flowService.save(command)
-            complete(result)
+            import com.jeff.financing.dto.ZioSupport.JsonResultSupport._
+            val result = ZFlow.save(command)
+                              .provideLayer(ZFlow.live)
+            complete(result.toJson)
           }
         }
     } ~ path("flows" / Remaining) { id =>
       get {
-        complete(flowService.get(id))
+        val result: Task[FlowItem] = ZFlow.get(id)
+                                          .provideLayer(ZFlow.live)
+        complete(result)
       } ~
         delete {
-          val result: Task[Map[String, String]] = flowService.delById(id)
-          complete(result)
+          import com.jeff.financing.dto.ZioSupport.JsonResultSupport._
+          val result: Task[Int] = ZFlow.delById(id)
+                                       .provideLayer(ZFlow.live)
+          complete(result.toJson)
         } ~
         put {
           import com.jeff.financing.dto.CreateFlowCommandJsonSupport._
           entity(as[CreateFlowCommand]) { command =>
-            val result = flowService.update(id, command)
-            val value: ZIO[Any, Throwable, Map[String, String]] = result.map(e => Map("data" -> e.toString))
-            complete(value)
+            import com.jeff.financing.dto.ZioSupport.JsonResultSupport._
+            val result: Task[Int] = ZFlow.update(id, command)
+                                         .provideLayer(ZFlow.live)
+            complete(result.toJson)
           }
         }
     }
