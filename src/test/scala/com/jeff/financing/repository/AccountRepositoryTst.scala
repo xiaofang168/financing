@@ -2,74 +2,59 @@ package com.jeff.financing.repository
 
 import com.jeff.financing.entity.Account
 import com.jeff.financing.repository.PersistenceImplicits._
-import org.junit.Test
-import zio.Runtime
+import zio.test.Assertion._
+import zio.test.{DefaultRunnableSpec, assert}
 
 import scala.language.postfixOps
 
-class AccountRepositoryTst {
+object AccountRepositoryTst extends DefaultRunnableSpec {
 
-  @Test
-  def findOne(): Unit = {
-    Runtime.default.unsafeRun(AccountRepository.findOne(20)
-      .fold(
-        f => {
-          println(s"fail f=$f");
-        },
-        s => {
-          println(s"success res = $s");
-        }
-      ))
-  }
+  override def spec = suite("AccountRepositorySpec")(
 
-  @Test
-  def get(): Unit = {
-    Runtime.default.unsafeRun(AccountRepository.get("606c0e8490dd604cb242eeff")
-      .fold(
-        f => {
-          println(s"fail f=$f");
-        },
-        s => {
-          println(s"success res = $s");
-        }
-      ))
-  }
+    testM("findOne correctly displays output") {
+      for {
+        output <- AccountRepository.get("606c0e8490dd604cb242eeff")
+      } yield {
+        println(output)
+        assert(0)(equalTo(0))
+      }
+    },
 
-  @Test
-  def findByAge(): Unit = {
-    Runtime.default.unsafeRun(AccountRepository.findByAge(20)
-      .fold(
-        f => {
-          println(s"fail f=$f");
-        },
-        s => {
-          println(s"success res = $s");
-        }
-      ))
-  }
+    testM("find one by age") {
+      for {
+        output <- AccountRepository.findOne(20)
+      } yield {
+        println(output)
+        assert(0)(equalTo(0))
+      }
+    },
 
-  @Test def update(): Unit = {
-    Runtime.default.unsafeRun(AccountRepository.update("5f3e789b0b3e528767af9a4f", Account("李四", Some(1), Some(30)))
-      .fold(
-        f => {
-          println(s"fail f=$f");
-        },
-        s => {
-          println(s"success res = $s");
-        }
-      ))
-  }
+    testM("find by age") {
+      for {
+        output <- AccountRepository.findByAge(20)
+      } yield {
+        println(output)
+        assert(0)(equalTo(0))
+      }
+    },
 
-  @Test def create(): Unit = {
-    Runtime.default.unsafeRun(AccountRepository.create(Account("李四", Some(1), Some(25)))
-      .fold(
-        f => {
-          println(s"fail f=$f");
-        },
-        s => {
-          println(s"success res = $s");
-        }
-      ))
-  }
+    testM("update") {
+      for {
+        output <- AccountRepository.update("606c4e2790dd604cb242f4cb", Account("李四", Some(1), Some(30)))
+      } yield {
+        println(output)
+        assert(0)(equalTo(0))
+      }
+    },
+
+    testM("insert") {
+      for {
+        output <- AccountRepository.create(Account("李四", Some(1), Some(25)))
+      } yield {
+        println(output)
+        assert(0)(equalTo(0))
+      }
+    }
+  )
 
 }
