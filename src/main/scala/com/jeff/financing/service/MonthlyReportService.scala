@@ -1,31 +1,35 @@
 package com.jeff.financing.service
 
-
 import cats.implicits._
 import com.jeff.financing.dto.{AssetReport, IncomeReport, MonthlyReportItem, MonthlyReportRow}
 import com.jeff.financing.entity.{Flow, MonthlyReport, Stocktaking}
 import com.jeff.financing.enums.CategoryEnum
-import com.jeff.financing.repository.MongoExecutor
 import com.jeff.financing.repository.PersistenceImplicits._
+import com.jeff.financing.repository.ZioMongoExecutor
 import com.jeff.financing.vo.{Asset, Capital, CapitalInterest, Income}
 import org.joda.time.format.DateTimeFormat
 import org.joda.time.{DateTime, Months}
 import reactivemongo.api.bson.{BSONDocument, document}
+import zio.Task
 
-import scala.collection.immutable
 import scala.collection.immutable.ListMap
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
 import scala.language.postfixOps
 
-trait MonthlyReportService extends MongoExecutor[MonthlyReport] {
+trait MonthlyReportService extends ZioMongoExecutor[MonthlyReport] {
 
   val flowService = new FlowService {}
   val stocktakingService: StocktakingService = new StocktakingService {}
 
-  def detail(date: Int): Future[Option[List[MonthlyReportRow]]] = {
+  def detail(date: Int): Task[List[MonthlyReportRow]] = {
     val a = new DataConverter[MonthlyReport, List[MonthlyReportRow]] {}
-    a.convert2Obj(super.findOne(document("date" -> date)), convert)
+    for {
+      r <- super.findOne(document("date" -> date))
+    } yield {
+      if (r.isEmpty) {
+        throw new RuntimeException(s"$date 详情不存在")
+      }
+      convert(r.get)
+    }
   }
 
   val convert: MonthlyReport => List[MonthlyReportRow] = monthlyReport => {
@@ -65,17 +69,15 @@ trait MonthlyReportService extends MongoExecutor[MonthlyReport] {
    *
    * @param date
    */
-  def gen(date: Int): Future[Boolean] = {
-    // 上个月的时间
-    val lastDate: Int = DateTime.parse(date.toString, DateTimeFormat.forPattern("yyyyMM"))
-      .minusMonths(1)
-      .toString("yyyyMM")
-      .toInt
+  def gen(date: Int): Task[Boolean] = {
     // 查询是否生成
-    val f: Future[Option[MonthlyReport]] = findOne(document("date" -> date))
-    val a: Future[Future[Boolean]] = f flatMap {
-      case Some(_) => Future(Future(false))
-      case None => {
+    val task: Task[Option[MonthlyReport]] = findOne(document("date" -> date))
+    for {
+      d <- task
+      monthlyReport <- {
+        if (d.isDefined) {
+          throw new RuntimeException("已经生成过报表")
+        }
         // 并行计算
         val a = findAllFlow()
         val b = findAllStocktaking(date)
@@ -161,22 +163,19 @@ trait MonthlyReportService extends MongoExecutor[MonthlyReport] {
             clCFSAmountMap.get(CategoryEnum.BANK.toString).map(_._2),
             clCFSAmountMap.get(CategoryEnum.SAVING.toString).map(_._2))
 
-          val monthlyReport = MonthlyReport(None, date, capitalSum, capitalInterestSum, incomeSum, capital, capitalInterest, income)
-
-          // 生成月报
-          create(monthlyReport)
+          MonthlyReport(None, date, capitalSum, capitalInterestSum, incomeSum, capital, capitalInterest, income)
         }
       }
-    }
-    a.flatten
+      r <- create(monthlyReport)
+    } yield r
   }
 
-  def findIncome(startDate: Int, endDate: Int): Future[IncomeReport] = {
-    val future = find(startDate, endDate, document("date" -> 1))
+  def findIncome(startDate: Int, endDate: Int): Task[IncomeReport] = {
+    val task = find(startDate, endDate, document("date" -> 1))
     for {
-      f <- future
+      r <- task
     } yield {
-      val value = f.map(e => Array(e.date.toString, e.capitalSum, e.capitalInterestSum, e.incomeSum))
+      val value = r.map(e => Array(e.date.toString, e.capitalSum, e.capitalInterestSum, e.incomeSum))
       val transpose = value.toArray.transpose
       val dates: List[String] = transpose(0) map (_.toString) toList
       val capitals: List[BigDecimal] = transpose(1) map (_.asInstanceOf[BigDecimal]) toList
@@ -186,12 +185,12 @@ trait MonthlyReportService extends MongoExecutor[MonthlyReport] {
     }
   }
 
-  def findAssert(startDate: Int, endDate: Int, typ: Int): Future[AssetReport] = {
-    val future = find(startDate, endDate, document("date" -> 1))
+  def findAssert(startDate: Int, endDate: Int, typ: Int): Task[AssetReport] = {
+    val task = find(startDate, endDate, document("date" -> 1))
     for {
-      f <- future
+      r <- task
     } yield {
-      val value = if (typ == 0) f.map(e => Array(e.date.toString, e.capital)) else f.map(e => Array(e.date.toString, e.capitalInterest))
+      val value = if (typ == 0) r.map(e => Array(e.date.toString, e.capital)) else r.map(e => Array(e.date.toString, e.capitalInterest))
       val transpose = value.toArray.transpose
       val dates: List[String] = transpose(0) map (_.toString) toList;
       convert(dates, transpose(1) map (_.asInstanceOf[Asset]) toList)
@@ -210,14 +209,14 @@ trait MonthlyReportService extends MongoExecutor[MonthlyReport] {
     AssetReport(dates, stocks, stockFunds, indexFunds, bondFunds, monetaryFunds, insurances, banks, savings)
   }
 
-  private def find(startDate: Int, endDate: Int, sortDoc: BSONDocument = document("date" -> -1)): Future[Vector[MonthlyReport]] = {
+  private def find(startDate: Int, endDate: Int, sortDoc: BSONDocument = document("date" -> -1)): Task[Vector[MonthlyReport]] = {
     list(0, Int.MaxValue, document("date" -> document("$gte" -> startDate, "$lte" -> endDate)), sortDoc)
   }
 
   /**
    * 查询所有流水
    */
-  private def findAllFlow(): Future[List[Flow]] = {
+  private def findAllFlow(): Task[List[Flow]] = {
     // 查询所有流水记录
     val f = flowService.list(0, Int.MaxValue, document("state" -> 1), document("_id" -> -1))
     f map (_.toList)
@@ -226,24 +225,21 @@ trait MonthlyReportService extends MongoExecutor[MonthlyReport] {
   /**
    * 按月份查询盘点
    */
-  private def findAllStocktaking(date: Int): Future[List[Stocktaking]] = {
+  private def findAllStocktaking(date: Int): Task[List[Stocktaking]] = {
     // 查询所有流水记录
-    val f: Future[Vector[Stocktaking]] = stocktakingService.list(0, Int.MaxValue, document("date" -> date), document("_id" -> -1))
+    val f: Task[Vector[Stocktaking]] = stocktakingService.list(0, Int.MaxValue, document("date" -> date), document("_id" -> -1))
     f map (_.toList)
   }
 
-  def previews(startDate: Int, endDate: Int): Future[immutable.Iterable[MonthlyReportItem]] = {
+  def previews(startDate: Int, endDate: Int): Task[List[MonthlyReportItem]] = {
     val starDateTime = DateTime.parse(startDate.toString, DateTimeFormat.forPattern("yyyyMM"))
     val endDateTime = DateTime.parse(endDate.toString, DateTimeFormat.forPattern("yyyyMM"))
     val m = Months.monthsBetween(starDateTime, endDateTime)
-    val futureMonthMap: Future[ListMap[Int, Int]] = Future {
-      getMonthMap(starDateTime.getMillis, m.getMonths)
-    }
-    val future: Future[Vector[MonthlyReport]] = find(startDate, endDate)
+    val task: Task[Vector[MonthlyReport]] = find(startDate, endDate)
     for {
-      monthMap <- futureMonthMap
-      r <- future
+      r <- task
     } yield {
+      val monthMap = getMonthMap(starDateTime.getMillis, m.getMonths)
       val map: Map[Int, MonthlyReport] = r.map(t => t.date -> t).toMap
       monthMap.map {
         case (k, v) => {
@@ -254,7 +250,7 @@ trait MonthlyReportService extends MongoExecutor[MonthlyReport] {
             MonthlyReportItem(None, k, 0)
           }
         }
-      }
+      }.toList
     }
   }
 

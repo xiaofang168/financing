@@ -5,11 +5,10 @@ import akka.http.scaladsl.server.Directives._
 import com.jeff.financing.api.ZioSupport._
 import com.jeff.financing.dto.CreateFlowCommand
 import com.jeff.financing.dto.FlowItemJsonSupport._
-import com.jeff.financing.internal.FutureConverterImplicits._
+import com.jeff.financing.internal.ResConverterImplicits._
 import com.jeff.financing.service.FlowService
 import zio._
 
-import scala.concurrent.Future
 import scala.language.postfixOps
 
 object FlowRouter {
@@ -24,7 +23,7 @@ object FlowRouter {
         post {
           import com.jeff.financing.dto.CreateFlowCommandJsonSupport._
           entity(as[CreateFlowCommand]) { command =>
-            val result: Future[Map[String, String]] = flowService.save(command)
+            val result: Task[Map[String, String]] = flowService.save(command)
             complete(result)
           }
         }
@@ -33,7 +32,7 @@ object FlowRouter {
         complete(flowService.get(id))
       } ~
         delete {
-          val result: Future[Map[String, String]] = flowService.delById(id)
+          val result: Task[Map[String, String]] = flowService.delById(id)
           complete(result)
         } ~
         put {

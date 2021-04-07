@@ -1,32 +1,41 @@
 package com.jeff.financing.service
 
-import cats.data.OptionT
 import com.jeff.financing.dto.{CreateFlowCommand, FlowItem, StocktakingStats}
-import com.jeff.financing.entity.{Flow, Stocktaking}
+import com.jeff.financing.entity.Flow
 import com.jeff.financing.enums.{CategoryEnum, PlatformEnum}
 import com.jeff.financing.repository.PersistenceImplicits._
-import com.jeff.financing.repository.{FlowRepository, MongoExecutor}
+import com.jeff.financing.repository.{FlowRepository, ZioMongoExecutor}
 import org.joda.time.format.DateTimeFormat
 import org.joda.time.{DateTime, Days}
 import reactivemongo.api.bson.document
-import zio.ZIO
+import zio.{Task, ZIO}
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
 import scala.math.BigDecimal.RoundingMode
 
-trait FlowService extends MongoExecutor[Flow] with DataConverter[Flow, FlowItem] {
+trait FlowService extends ZioMongoExecutor[Flow] with DataConverter[Flow, FlowItem] {
 
   val stocktakingService = new StocktakingService {}
 
-  def list(): Future[List[FlowItem]] = {
-    val future: Future[Vector[Flow]] = FlowRepository.list()
-    super.convert2ListWithFuture(future, handles)
+  def list(): Task[Vector[FlowItem]] = {
+    val task: Task[Vector[Flow]] = FlowRepository.list()
+    convert(task)
   }
 
-  def list(startDate: Option[String], endDate: Option[String], platform: Option[String], category: Option[String]): Future[List[FlowItem]] = {
-    val future: Future[Vector[Flow]] = FlowRepository.list(startDate, endDate, platform, category)
-    super.convert2ListWithFuture(future, handles)
+  def list(startDate: Option[String], endDate: Option[String], platform: Option[String], category: Option[String]): Task[Vector[FlowItem]] = {
+    val task: Task[Vector[Flow]] = FlowRepository.list(startDate, endDate, platform, category)
+    convert(task)
+  }
+
+  private def convert(task: Task[Vector[Flow]]): Task[Vector[FlowItem]] = {
+    for {
+      r <- task
+      a <- {
+        val targetIds = r.map(e => e._id.get.stringify)
+        stocktakingService.aggregate(document("targetId" -> document("$in" -> targetIds)))
+      }
+    } yield {
+      handles(r, a)
+    }
   }
 
   def save(command: CreateFlowCommand) = {
@@ -38,54 +47,49 @@ trait FlowService extends MongoExecutor[Flow] with DataConverter[Flow, FlowItem]
 
   def update(id: String, command: CreateFlowCommand): ZIO[Any, Throwable, Int] = {
     val obj = FlowRepository.get(id)
-
-    val a: Future[Int] = for {
+    for {
       result <- obj
       out <- {
         if (result.isEmpty) {
-          Future(0)
-        } else {
-          val obj = result.get
-          val flow = Flow(obj._id, PlatformEnum.withName(command.platform), CategoryEnum.withName(command.category), obj.state, command.amount,
-            command.rate, command.target, command.startDate.replaceAll("-", "").toInt,
-            command.endDate.map(e => e.replaceAll("-", "").toInt), obj.income, obj.createTime)
-          super.update(id, flow)
+          throw new RuntimeException("流水记录不存在")
         }
+        val obj = result.get
+        val flow = Flow(obj._id, PlatformEnum.withName(command.platform), CategoryEnum.withName(command.category), obj.state, command.amount,
+          command.rate, command.target, command.startDate.replaceAll("-", "").toInt,
+          command.endDate.map(e => e.replaceAll("-", "").toInt), obj.income, obj.createTime)
+        super.update(id, flow)
       }
     } yield {
       out
     }
-
-    ZIO.fromFuture(_ => a)
   }
 
   def save(flow: Flow) = {
     FlowRepository.create(flow)
   }
 
-  def delById(id: String): Future[Int] = {
+  def delById(id: String): Task[Int] = {
     super.delete(id)
   }
 
-  def get(id: String): Future[Option[FlowItem]] = {
-    val future = FlowRepository.get(id)
-    super.convert2ObjWithFuture(future, handle)
-  }
-
-  val handle: Flow => Future[FlowItem] = flow => {
-    val f: OptionT[Future, Stocktaking] = stocktakingService.findOne(flow._id.get.stringify)
-    f.map(e => converter(flow, Some(StocktakingStats(e.targetId, e.date, e.amount, e.income, e.createTime)))).getOrElse(converter(flow, None))
-  }
-
-  val handles: List[Flow] => Future[List[FlowItem]] = flows => {
-    val targetIds = flows.map(e => e._id.get.stringify)
-    val future: Future[Vector[StocktakingStats]] = stocktakingService.aggregate(document("targetId" -> document("$in" -> targetIds)))
+  def get(id: String): Task[FlowItem] = {
+    val task = FlowRepository.get(id)
     for {
-      stocktakingStats <- future
+      r <- task
+      a <- {
+        if (r.isEmpty) {
+          throw new RuntimeException("流水记录不存在")
+        }
+        stocktakingService.findOne(r.get._id.get.stringify)
+      }
     } yield {
-      val stocktakingStatsMap = stocktakingStats.map(e => (e._id, e)).toMap
-      flows.map(flow => converter(flow, stocktakingStatsMap.get(flow._id.get.stringify)))
+      a.map(e => converter(r.get, Some(StocktakingStats(e.targetId, e.date, e.amount, e.income, e.createTime)))).getOrElse(converter(r.get, None))
     }
+  }
+
+  val handles: (Vector[Flow], Vector[StocktakingStats]) => Vector[FlowItem] = (flows, stocktakingStats) => {
+    val stocktakingStatsMap = stocktakingStats.map(e => (e._id, e)).toMap
+    flows.map(flow => converter(flow, stocktakingStatsMap.get(flow._id.get.stringify)))
   }
 
   private def converter(flow: Flow, stocktaking: Option[StocktakingStats]): FlowItem = {

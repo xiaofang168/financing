@@ -2,21 +2,19 @@ package com.jeff.financing.service
 
 
 import com.jeff.financing._
-import com.jeff.financing.entity.{Flow, Stocktaking}
+import com.jeff.financing.entity.Stocktaking
 import com.jeff.financing.enums.{CategoryEnum, PlatformEnum}
 import org.junit.Test
 import reactivemongo.api.bson.BSONObjectID
 
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.language.postfixOps
-import scala.util.{Failure, Success}
 
 class FlowServiceTst {
 
   @Test
   def list(): Unit = {
-    val flows = List(Flow(None, PlatformEnum.ALI, CategoryEnum.STOCK_FUND, 1, 1000, Some(0.045F), "新华轮换混合", 20200306, Some(20200906)),
-      Flow(None, PlatformEnum.JD, CategoryEnum.SAVING, 1, 10000, Some(0.045F), "中关村银行", 20200306, Some(20200906)))
+    val flows = List(com.jeff.financing.entity.Flow(None, PlatformEnum.ALI, CategoryEnum.STOCK_FUND, 1, 1000, Some(0.045F), "新华轮换混合", 20200306, Some(20200906)),
+      com.jeff.financing.entity.Flow(None, PlatformEnum.JD, CategoryEnum.SAVING, 1, 10000, Some(0.045F), "中关村银行", 20200306, Some(20200906)))
 
     val r = sort(flows, Seq(
       SortingField("amount", Ordering[Float].reverse),
@@ -27,36 +25,12 @@ class FlowServiceTst {
   }
 
   @Test
-  def save(): Unit = {
-    val flowService = new FlowService {}
-    val flow = Flow(None, PlatformEnum.ALI, CategoryEnum.STOCK_FUND, 1, 1000, Some(0.045),
-      "新华轮换混合", 20200306, Some(20200906))
-    val f = flowService.save(flow)
-    f onComplete {
-      case Success(value) => println(value)
-      case Failure(exception) => exception.printStackTrace()
-    }
-    Thread.sleep(5000)
-  }
-
-  @Test
-  def search(): Unit = {
-    val flowService = new FlowService {}
-    val f = flowService.list()
-    f onComplete {
-      case Success(value) => println(">>>" + value)
-      case Failure(exception) => exception.printStackTrace()
-    }
-    Thread.sleep(5000)
-  }
-
-  @Test
   def group(): Unit = {
-    val flows = List(Flow(Some(BSONObjectID.parse("5fc77d278f3c0f3ee0924e2d").get), PlatformEnum.ALI, CategoryEnum.STOCK_FUND, 1, 18000, Some(0.045F),
+    val flows = List(com.jeff.financing.entity.Flow(Some(BSONObjectID.parse("5fc77d278f3c0f3ee0924e2d").get), PlatformEnum.ALI, CategoryEnum.STOCK_FUND, 1, 18000, Some(0.045F),
       "新华轮换混合", 20200306, Some(20200906)),
-      Flow(Some(BSONObjectID.parse("5fc77e4c8f3c0f3ee0924e73").get), PlatformEnum.JD, CategoryEnum.SAVING, 1, 28000, Some(0.045F),
+      com.jeff.financing.entity.Flow(Some(BSONObjectID.parse("5fc77e4c8f3c0f3ee0924e73").get), PlatformEnum.JD, CategoryEnum.SAVING, 1, 28000, Some(0.045F),
         "中关村银行", 20200306, Some(20200906)),
-      Flow(Some(BSONObjectID.parse("5fc77e818f3c0f3ee0924e84").get), PlatformEnum.JD, CategoryEnum.SAVING, 1, 10000, Some(0.045F),
+      com.jeff.financing.entity.Flow(Some(BSONObjectID.parse("5fc77e818f3c0f3ee0924e84").get), PlatformEnum.JD, CategoryEnum.SAVING, 1, 10000, Some(0.045F),
         "中关村银行", 20200306, Some(20200906))
     )
 

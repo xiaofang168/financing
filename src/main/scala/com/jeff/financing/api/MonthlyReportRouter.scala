@@ -1,10 +1,10 @@
 package com.jeff.financing.api
 
 import akka.http.scaladsl.server.Directives.{path, _}
+import com.jeff.financing.api.ZioSupport._
 import com.jeff.financing.dto.MonthlyReportItemJsonSupport._
 import com.jeff.financing.service.MonthlyReportService
-
-import scala.concurrent.Future
+import zio.Task
 
 object MonthlyReportRouter {
 
@@ -13,6 +13,7 @@ object MonthlyReportRouter {
     path("monthly" / "report" / "previews") {
       get {
         parameters("start_date".as[Int], "end_date".as[Int]) { (startDate, endDate) =>
+          import com.jeff.financing.dto.MonthlyReportItemJsonSupport._
           complete(service.previews(startDate, endDate))
         }
       }
@@ -39,8 +40,8 @@ object MonthlyReportRouter {
       }
     } ~ path("monthly" / "report" / "gen" / IntNumber) { date =>
       get {
-        import com.jeff.financing.internal.FutureConverterImplicits._
-        val result: Future[Map[String, String]] = service.gen(date)
+        import com.jeff.financing.internal.ResConverterImplicits._
+        val result: Task[Map[String, String]] = service.gen(date)
         complete(result)
       }
     } ~ path("monthly" / "report" / IntNumber) { date =>

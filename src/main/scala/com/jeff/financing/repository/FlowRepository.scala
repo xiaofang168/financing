@@ -5,16 +5,15 @@ import com.jeff.financing.entity.Flow
 import com.jeff.financing.repository.PersistenceImplicits._
 import com.jeff.financing.{getBson, str2Int}
 import reactivemongo.api.bson._
+import zio.Task
 
-import scala.concurrent.Future
+object FlowRepository extends ZioMongoExecutor[Flow] {
 
-object FlowRepository extends MongoExecutor[Flow] {
-
-  def list(): Future[Vector[Flow]] = {
+  def list(): Task[Vector[Flow]] = {
     list(0, Int.MaxValue, document("endDate" -> 1))
   }
 
-  def list(startDate: Option[String], endDate: Option[String], platform: Option[String], category: Option[String]): Future[Vector[Flow]] = {
+  def list(startDate: Option[String], endDate: Option[String], platform: Option[String], category: Option[String]): Task[Vector[Flow]] = {
     // 转换查询需要的数据格式
     val map = Map("startDate" -> str2Int(startDate), "endDate" -> str2Int(endDate),
       "platform" -> platform.flatMap {

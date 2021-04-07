@@ -2,7 +2,6 @@ package com.jeff.financing.repository
 
 import com.jeff.financing.Config
 import com.jeff.financing.entity.Persistence
-import com.jeff.financing.repository.MongoExecutor.customStrategy
 import org.reflections.Reflections
 import reactivemongo.api._
 import reactivemongo.api.bson.collection.BSONCollection
@@ -11,6 +10,7 @@ import zio.{Task, ZIO}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import scala.concurrent.duration._
 import scala.language.postfixOps
 import scala.reflect.ClassTag
 
@@ -26,6 +26,11 @@ trait ZioMongoExecutor[T] {
 
   protected def exec[A](fn: BSONCollection => Future[A])(implicit tag: ClassTag[T]): Task[A] = {
     val collName = getCollName(tag.runtimeClass.getName)
+    val customStrategy = FailoverStrategy(
+      initialDelay = 500 milliseconds,
+      retries = 5,
+      delayFactor = attemptNumber => 1 + attemptNumber * 0.5
+    )
     for {
       db <- Config.dbConfig
       r <- ZIO.fromFuture(_ => fn(db.collection(collName, customStrategy)))

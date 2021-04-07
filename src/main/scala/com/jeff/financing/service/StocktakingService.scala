@@ -1,23 +1,22 @@
 package com.jeff.financing.service
 
-import cats.data.OptionT
 import com.jeff.financing.dto.{CreateStocktakingCommand, StocktakingItem, StocktakingStats}
 import com.jeff.financing.entity.Stocktaking
-import com.jeff.financing.repository.MongoExecutor
 import com.jeff.financing.repository.PersistenceImplicits.{stocktakingReader, stocktakingWriter}
+import com.jeff.financing.repository.ZioMongoExecutor
 import com.jeff.financing.str2Int
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 import reactivemongo.api.Cursor
 import reactivemongo.api.bson.{BSONDocument, BSONDocumentReader, BSONString, document}
+import zio.Task
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
 import scala.reflect.ClassTag
 
-trait StocktakingService extends MongoExecutor[Stocktaking] with DataConverter[Stocktaking, StocktakingItem] {
+trait StocktakingService extends ZioMongoExecutor[Stocktaking] with DataConverter[Stocktaking, StocktakingItem] {
 
-  def save(command: CreateStocktakingCommand): Future[Boolean] = {
+  def save(command: CreateStocktakingCommand): Task[Boolean] = {
     // 时间转换为int
     import io.scalaland.chimney.dsl._
     val stocktaking = command.into[Stocktaking]
@@ -28,38 +27,44 @@ trait StocktakingService extends MongoExecutor[Stocktaking] with DataConverter[S
     create(stocktaking)
   }
 
-  def update(id: String, command: CreateStocktakingCommand): Future[Int] = {
+  def update(id: String, command: CreateStocktakingCommand): Task[Int] = {
     val obj = get(id)
     for {
       result <- obj
       out <- {
         if (result.isEmpty) {
-          Future(0)
-        } else {
-          val obj = result.get
-          val date = str2Int(command.date)
-          val u = Stocktaking(obj._id, obj.targetId, date, command.amount, command.income, command.totalIncome, command.rate, command.comment, obj.createTime)
-          super.update(id, u)
+          throw new RuntimeException("未找到盘点记录")
         }
+        val obj = result.get
+        val date = str2Int(command.date)
+        val u = Stocktaking(obj._id, obj.targetId, date, command.amount, command.income, command.totalIncome, command.rate, command.comment, obj.createTime)
+        super.update(id, u)
       }
     } yield {
       out
     }
   }
 
-  def find(): Future[Vector[StocktakingItem]] = {
-    val future = list(0, Int.MaxValue, document("date" -> -1))
-    super.convert2Vector(future, this.convert)
+  def find(): Task[Vector[StocktakingItem]] = {
+    val task = list(0, Int.MaxValue, document("date" -> -1))
+    for {
+      r <- task
+    } yield {
+      r.map(convert(_))
+    }
   }
 
-  def findOne(targetId: String): OptionT[Future, Stocktaking] = {
-    val a = findOne(document("targetId" -> targetId), document("date" -> -1))
-    OptionT(a)
+  def findOne(targetId: String): Task[Option[Stocktaking]] = {
+    findOne(document("targetId" -> targetId), document("date" -> -1))
   }
 
-  def find(targetId: String): Future[Vector[StocktakingItem]] = {
-    val future = list(0, Int.MaxValue, document("targetId" -> targetId), document("date" -> -1))
-    super.convert2Vector(future, this.convert)
+  def find(targetId: String): Task[Vector[StocktakingItem]] = {
+    val task = list(0, Int.MaxValue, document("targetId" -> targetId), document("date" -> -1))
+    for {
+      r <- task
+    } yield {
+      r.map(convert(_))
+    }
   }
 
   /**
@@ -88,8 +93,12 @@ trait StocktakingService extends MongoExecutor[Stocktaking] with DataConverter[S
     })
   }
 
-  def getById(id: String) = {
-    super.convert2Obj(super.get(id), convert)
+  def getById(id: String): Task[Option[StocktakingItem]] = {
+    for {
+      r <- super.get(id)
+    } yield {
+      r.map(convert(_))
+    }
   }
 
   def delById(id: String) = {
