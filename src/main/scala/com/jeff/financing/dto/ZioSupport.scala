@@ -30,15 +30,16 @@ object ZioSupport {
 
   implicit def zioMarshaller[A, E](implicit m1: Marshaller[A, HttpResponse], m2: Marshaller[E, HttpResponse]): Marshaller[IO[E, A], HttpResponse] =
     Marshaller { implicit ec =>
-      a => {
-        val r = a.foldM(
+      effect => {
+
+        val marshalledEffect: IO[Throwable, List[Marshalling[HttpResponse]]] = effect.foldM(
           err => IO.fromFuture(implicit ec => m2(err)),
           suc => IO.fromFuture(implicit ec => m1(suc))
         )
 
         val p = Promise[List[Marshalling[HttpResponse]]]()
 
-        Runtime.default.unsafeRunAsync(r) { exit =>
+        Runtime.default.unsafeRunAsync(marshalledEffect) { exit =>
           exit.fold(
             failed => p.failure(failed.squash),
             success => p.success(success)
@@ -48,5 +49,6 @@ object ZioSupport {
         p.future
       }
     }
+
 
 }
