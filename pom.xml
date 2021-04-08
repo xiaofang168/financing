@@ -83,6 +83,16 @@
             <version>1.0.4-2</version>
         </dependency>
         <dependency>
+            <groupId>io.circe</groupId>
+            <artifactId>circe-generic_${scala.binary.version}</artifactId>
+            <version>0.13.0</version>
+        </dependency>
+        <dependency>
+            <groupId>de.heikoseeberger</groupId>
+            <artifactId>akka-http-circe_${scala.binary.version}</artifactId>
+            <version>1.36.0</version>
+        </dependency>
+        <dependency>
             <groupId>com.github.pureconfig</groupId>
             <artifactId>pureconfig_${scala.binary.version}</artifactId>
             <version>0.14.1</version>
