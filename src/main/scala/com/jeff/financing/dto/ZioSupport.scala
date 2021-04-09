@@ -4,13 +4,13 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.marshalling.{Marshaller, Marshalling}
 import akka.http.scaladsl.model.HttpResponse
 import com.jeff.financing.internal.LowerCaseWithUnderscores
-import zio.{IO, Runtime, Task}
+import zio.{BootstrapRuntime, IO, Task}
 
 import scala.concurrent.Promise
 
 case class JsonResult(data: String)
 
-object ZioSupport {
+object ZioSupport extends BootstrapRuntime {
 
   object JsonResultSupport extends LowerCaseWithUnderscores with SprayJsonSupport {
     implicit val jsonResultFormats = jsonFormat1(JsonResult)
@@ -39,7 +39,7 @@ object ZioSupport {
 
         val p = Promise[List[Marshalling[HttpResponse]]]()
 
-        Runtime.default.unsafeRunAsync(marshalledEffect) { exit =>
+        unsafeRunAsync(marshalledEffect) { exit =>
           exit.fold(
             failed => p.failure(failed.squash),
             success => p.success(success)
