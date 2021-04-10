@@ -15,7 +15,7 @@ object AccountRouter extends ResponseFactory {
   val route =
     path("accounts" / "test") {
       val a = Future {
-        Result(Foo("test hello world"))
+        Foo("test hello world")
       }
       import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport._
       import io.circe.generic.auto._
@@ -30,7 +30,7 @@ object AccountRouter extends ResponseFactory {
       path("accounts") {
         import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport._
         import io.circe.generic.auto._
-        complete(Result(Foo("test")))
+        sendResponse(Foo("test"))
       }
 
 }

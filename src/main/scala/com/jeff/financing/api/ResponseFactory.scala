@@ -22,6 +22,7 @@ import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server._
 import com.jeff.financing.dto.JsonResult
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.util.{Failure, Success}
 
@@ -29,13 +30,21 @@ trait ResponseFactory {
 
   final case class Result[T](data: T)
 
-  def sendResponse[T](eventualResult: Future[T])(implicit marshaller: T ⇒ ToResponseMarshallable): Route = {
-    onComplete(eventualResult) {
+  def sendResponse[T](eventualResult: Future[T])(implicit marshaller: Result[T] ⇒ ToResponseMarshallable): Route = {
+    val f: Future[Result[T]] = for (r <- eventualResult) yield Result(r)
+    onComplete(f) {
       case Success(result) ⇒
         complete(result)
       case Failure(e) ⇒
         import com.jeff.financing.dto.ZioSupport.JsonResultSupport._
         complete(ToResponseMarshallable(InternalServerError → JsonResult(e.getMessage)))
+    }
+  }
+
+  def sendResponse[T](data: T)(implicit marshaller: Result[T] ⇒ ToResponseMarshallable): Route = {
+    val f = Future(Result(data))
+    sendResponse(f) {
+      implicit res => res.data
     }
   }
 
