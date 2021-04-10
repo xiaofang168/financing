@@ -5,19 +5,28 @@ import com.jeff.financing.dto.ZioSupport._
 import com.jeff.financing.entity.AccountJsonSupport._
 import com.jeff.financing.service.ZAccount
 
-object AccountRouter {
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
+
+object AccountRouter extends ResponseFactory {
 
   private final case class Foo(bar: String)
 
-  private final case class Result[T](data: T)
-
   val route =
-    path("accounts" / Remaining) { id =>
-      val value = ZAccount
-        .get(id) // the specification of the action
-        .provideLayer(ZAccount.live) // plugging in a real layer/implementation to run on
-      complete(value)
+    path("accounts" / "test") {
+      val a = Future {
+        Result(Foo("test hello world"))
+      }
+      import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport._
+      import io.circe.generic.auto._
+      sendResponse(a)
     } ~
+      path("accounts" / Remaining) { id =>
+        val value = ZAccount
+          .get(id) // the specification of the action
+          .provideLayer(ZAccount.live) // plugging in a real layer/implementation to run on
+        complete(value)
+      } ~
       path("accounts") {
         import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport._
         import io.circe.generic.auto._
@@ -25,3 +34,4 @@ object AccountRouter {
       }
 
 }
+
