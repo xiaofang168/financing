@@ -23,13 +23,13 @@ object ZAccount {
     def save(user: Account): Task[Boolean]
   }
 
-  val live: ZLayer[Any, Nothing, ZAccountEnv] = ZLayer.succeed(new Service {
+  val live: ZLayer[Any, Throwable, ZAccountEnv] = ZLayer.succeed(new Service {
     override def get(id: String): Task[AccountItem] = {
       for {
         account <- AccountRepository.get(id)
       } yield {
         if (account.isEmpty) {
-          throw new RuntimeException("帐号不存在...")
+          throw new Exception("帐号不存在...")
         }
         AccountItem(account.get._id.get.stringify, account.get.name, account.get.sex, account.get.age)
       }
