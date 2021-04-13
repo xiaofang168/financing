@@ -124,6 +124,7 @@ object ZFlow {
         flow.endDate,
         new DateTime(flow.createTime).toString("yyyy-MM-dd"))
     }
+
   }
 
   val live: ZLayer[ZStocktakingEnv, Nothing, ZFlowEnv] = ZLayer.fromService[ZStocktaking.Service, ZFlow.Service] {
@@ -141,6 +142,5 @@ object ZFlow {
   def delById(id: String): ZIO[ZFlowEnv, Throwable, Int] = ZIO.accessM(_.get.delById(id))
 
   def get(id: String): ZIO[ZFlowEnv, Throwable, FlowItem] = ZIO.accessM(_.get.get(id))
-
 
 }

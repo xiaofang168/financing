@@ -18,25 +18,7 @@ object ZStocktaking {
 
   type ZStocktakingEnv = Has[ZStocktaking.Service]
 
-  trait Service extends ZioMongoExecutor[Stocktaking] {
-    def save(command: CreateStocktakingCommand): Task[Boolean]
-
-    def update(id: String, command: CreateStocktakingCommand): Task[Int]
-
-    def find(): Task[Vector[StocktakingItem]]
-
-    def findOne(targetId: String): Task[Option[Stocktaking]]
-
-    def find(targetId: String): Task[Vector[StocktakingItem]]
-
-    def aggregate(mat: BSONDocument)(implicit m: BSONDocumentReader[StocktakingStats], tag: ClassTag[Stocktaking]): Task[Vector[StocktakingStats]]
-
-    def getById(id: String): Task[Option[StocktakingItem]]
-
-    def delById(id: String): Task[Int]
-  }
-
-  val live: ZLayer[Any, Nothing, ZStocktakingEnv] = ZLayer.succeed(new Service() {
+  class Service extends ZioMongoExecutor[Stocktaking] {
     def save(command: CreateStocktakingCommand): Task[Boolean] = {
       // 时间转换为int
       import io.scalaland.chimney.dsl._
@@ -130,7 +112,9 @@ object ZStocktaking {
       val dateFormat = DateTime.parse(stocktaking.date.toString, DateTimeFormat.forPattern("yyyyMM")).toString("yyyy-MM")
       StocktakingItem(stocktaking.targetId, stocktaking._id.get.stringify, dateFormat, stocktaking.amount, stocktaking.income, stocktaking.totalIncome, stocktaking.rate, new DateTime(stocktaking.createTime).toString("yyyy-MM-dd"), stocktaking.comment)
     }
-  })
+  }
+
+  val live: ZLayer[Any, Nothing, ZStocktakingEnv] = ZLayer.succeed(new Service)
 
   def save(command: CreateStocktakingCommand): ZIO[ZStocktakingEnv, Throwable, Boolean] = ZIO.accessM(_.get.save(command))
 
