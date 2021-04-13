@@ -2,51 +2,62 @@ package com.jeff.financing.api
 
 import akka.http.scaladsl.server.Directives.{path, _}
 import com.jeff.financing.dto.ZioSupport._
-import com.jeff.financing.service.MonthlyReportService
+import com.jeff.financing.dto.{AssetReport, IncomeReport, MonthlyReportItem, MonthlyReportRow}
+import com.jeff.financing.service.{ZFlow, ZMonthlyReport, ZStocktaking}
 import zio.Task
 
 object MonthlyReportRouter {
 
-  val service = new MonthlyReportService {}
   val route =
     path("monthly" / "report" / "previews") {
       get {
         parameters("start_date".as[Int], "end_date".as[Int]) { (startDate, endDate) =>
           import com.jeff.financing.dto.MonthlyReportItemJsonSupport._
-          complete(service.previews(startDate, endDate))
+          val result: Task[List[MonthlyReportItem]] = ZMonthlyReport.previews(startDate, endDate)
+                                                                    .provideLayer((ZStocktaking.live >>> ZFlow.live) >>> ZMonthlyReport.live)
+          complete(result)
         }
       }
     } ~ path("monthly" / "report" / "income") {
       get {
         parameters("start_date".as[Int], "end_date".as[Int]) { (startDate, endDate) =>
           import com.jeff.financing.dto.IncomeReportJsonSupport._
-          complete(service.findIncome(startDate, endDate))
+          val result: Task[IncomeReport] = ZMonthlyReport.findIncome(startDate, endDate)
+                                                         .provideLayer((ZStocktaking.live >>> ZFlow.live) >>> ZMonthlyReport.live)
+          complete(result)
         }
       }
     } ~ path("monthly" / "report" / "asset" / "capital") {
       get {
         parameters("start_date".as[Int], "end_date".as[Int]) { (startDate, endDate) =>
           import com.jeff.financing.dto.AssetReportJsonSupport._
-          complete(service.findAssert(startDate, endDate, 0))
+          val result: Task[AssetReport] = ZMonthlyReport.findAssert(startDate, endDate, 0)
+                                                        .provideLayer((ZStocktaking.live >>> ZFlow.live) >>> ZMonthlyReport.live)
+          complete(result)
         }
       }
     } ~ path("monthly" / "report" / "asset" / "capital_interests") {
       get {
         parameters("start_date".as[Int], "end_date".as[Int]) { (startDate, endDate) =>
           import com.jeff.financing.dto.AssetReportJsonSupport._
-          complete(service.findAssert(startDate, endDate, 1))
+          val result: Task[AssetReport] = ZMonthlyReport.findAssert(startDate, endDate, 1)
+                                                        .provideLayer((ZStocktaking.live >>> ZFlow.live) >>> ZMonthlyReport.live)
+          complete(result)
         }
       }
     } ~ path("monthly" / "report" / "gen" / IntNumber) { date =>
       get {
         import com.jeff.financing.dto.ZioSupport.JsonResultSupport._
-        val result: Task[Boolean] = service.gen(date)
+        val result: Task[Boolean] = ZMonthlyReport.gen(date)
+                                                  .provideLayer((ZStocktaking.live >>> ZFlow.live) >>> ZMonthlyReport.live)
         complete(result.toJson)
       }
     } ~ path("monthly" / "report" / IntNumber) { date =>
       get {
         import com.jeff.financing.dto.MonthlyReportRowJsonSupport._
-        complete(service.detail(date))
+        val result: Task[List[MonthlyReportRow]] = ZMonthlyReport.detail(date)
+                                                                 .provideLayer((ZStocktaking.live >>> ZFlow.live) >>> ZMonthlyReport.live)
+        complete(result)
       }
     }
 
