@@ -88,12 +88,19 @@ object ZMonthlyReport {
             // 计算本金和
             val capitalSum: BigDecimal = flows.map(_.amount).sum
 
+            // flow所有id
+            val flowIds: List[String] = flows.map(_._id.get.stringify)
+
             // 已经盘点的资金和
             val hadStocktakingCapitalInterestSum = stocktakingList.map(_.amount).sum
 
             // 未进行当月盘点的资金
             val targetIds = stocktakingList.map(_.targetId)
             val noStocktakingCapitalInterestSum = flows.filter(e => !targetIds.contains(e._id.get.stringify)).map(e => e.amount).sum
+
+            // 标的盘点id差值
+            val diffIds: List[String] = flowIds.diff(targetIds)
+            println("未盘点的标的id集合" + diffIds)
 
             // 计算本息和
             val capitalInterestSum = hadStocktakingCapitalInterestSum + noStocktakingCapitalInterestSum
