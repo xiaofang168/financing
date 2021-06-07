@@ -1,6 +1,7 @@
 package com.jeff.financing.api
 
 import akka.http.scaladsl.server.Directives.{path, _}
+import com.jeff.financing.api.AccountRouter.sendResponse
 import com.jeff.financing.dto.ZioSupport._
 import com.jeff.financing.dto.{AssetReport, IncomeReport, MonthlyReportItem, MonthlyReportRow}
 import com.jeff.financing.service.{ZFlow, ZMonthlyReport, ZStocktaking}
@@ -56,10 +57,11 @@ object MonthlyReportRouter {
       }
     } ~ path("monthly" / "report" / IntNumber) { date =>
       get {
-        import com.jeff.financing.dto.MonthlyReportRowJsonSupport._
+        import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport._
+        import io.circe.generic.auto._
         val result: Task[List[MonthlyReportRow]] = ZMonthlyReport.detail(date)
                                                                  .provideLayer(monthlyReportLayer)
-        complete(result)
+        sendResponse(result)
       }
     }
 
