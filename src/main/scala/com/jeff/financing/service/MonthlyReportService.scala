@@ -22,8 +22,13 @@ object ZMonthlyReport {
 
   class Service(flowService: ZFlow.Service) extends ZioMongoExecutor[MonthlyReport] {
     def detail(date: Int): Task[List[MonthlyReportRow]] = {
-      super.findOne(document("date" -> date))
-           .map(_.fold(throw new RuntimeException(s"$date 详情不存在"))(convert(_)))
+      for {
+        r <- super.findOne(document("date" -> date))
+        res <- r match {
+          case None => ZIO.fail(new RuntimeException(s"$date 详情不存在"))
+          case Some(p) => ZIO.succeed(convert(p))
+        }
+      } yield res
     }
 
     val convert: MonthlyReport => List[MonthlyReportRow] = monthlyReport => {
