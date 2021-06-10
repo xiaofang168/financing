@@ -2,7 +2,6 @@ package com.jeff.financing.repository
 
 import com.jeff.financing.Config
 import com.jeff.financing.entity.Persistence
-import org.reflections.Reflections
 import reactivemongo.api._
 import reactivemongo.api.bson.collection.BSONCollection
 import reactivemongo.api.bson.{BSONDocument, BSONDocumentReader, BSONDocumentWriter, BSONObjectID, document}
@@ -16,16 +15,9 @@ import scala.reflect.ClassTag
 
 trait ZioMongoExecutor[T] {
 
-  private def getCollName(className: String): String = {
-    import scala.collection.mutable
-    import scala.jdk.CollectionConverters._
-    val annotation = new Reflections(className).getTypesAnnotatedWith(classOf[Persistence])
-    val values: mutable.Set[Persistence] = annotation.asScala.map(e => e.getAnnotation(classOf[Persistence]))
-    values.head.collName()
-  }
-
   protected def exec[A](fn: BSONCollection => Future[A])(implicit tag: ClassTag[T]): Task[A] = {
-    val collName = getCollName(tag.runtimeClass.getName)
+    val persistence: Persistence = tag.runtimeClass.getAnnotation(classOf[Persistence])
+    val collName = persistence.collName()
     val customStrategy = FailoverStrategy(
       initialDelay = 500 milliseconds,
       retries = 5,
@@ -70,10 +62,10 @@ trait ZioMongoExecutor[T] {
   def list(offset: Int, limit: Int, findDoc: BSONDocument, sortDoc: BSONDocument)(implicit m: BSONDocumentReader[T], tag: ClassTag[T]): Task[Vector[T]] = {
     exec(coll => {
       coll.find(findDoc, Option.empty[BSONDocument])
-        .sort(sortDoc)
-        .skip(offset)
-        .cursor[T](ReadPreference.primary).
-        collect[Vector](limit, Cursor.FailOnError[Vector[T]]())
+          .sort(sortDoc)
+          .skip(offset)
+          .cursor[T](ReadPreference.primary).
+          collect[Vector](limit, Cursor.FailOnError[Vector[T]]())
     })
   }
 
