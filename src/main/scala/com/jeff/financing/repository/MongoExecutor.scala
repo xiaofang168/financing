@@ -2,7 +2,6 @@ package com.jeff.financing.repository
 
 import com.jeff.financing.entity.Persistence
 import com.jeff.financing.repository.MongoExecutor.{customStrategy, db}
-import org.reflections.Reflections
 import reactivemongo.api._
 import reactivemongo.api.bson.collection.BSONCollection
 import reactivemongo.api.bson.{BSONDocument, BSONDocumentReader, BSONDocumentWriter, BSONObjectID, document}
@@ -16,16 +15,9 @@ import scala.reflect.ClassTag
 trait MongoExecutor[T] {
 
   protected def exec[A](fn: BSONCollection => Future[A])(implicit tag: ClassTag[T]): Future[A] = {
-    val collName = getCollName(tag.runtimeClass.getName)
+    val persistence: Persistence = tag.runtimeClass.getAnnotation(classOf[Persistence])
+    val collName = persistence.collName()
     db.map(e => e.collection(collName, customStrategy)).flatMap(fn(_))
-  }
-
-  private def getCollName(className: String): String = {
-    import scala.collection.mutable
-    import scala.jdk.CollectionConverters._
-    val annotation = new Reflections(className).getTypesAnnotatedWith(classOf[Persistence])
-    val values: mutable.Set[Persistence] = annotation.asScala.map(e => e.getAnnotation(classOf[Persistence]))
-    values.head.collName()
   }
 
   def create(t: T)(implicit m: BSONDocumentWriter[T], tag: ClassTag[T]): Future[Boolean] = {
@@ -44,8 +36,8 @@ trait MongoExecutor[T] {
   def findOne(findDoc: BSONDocument, sortDoc: BSONDocument = document("_id" -> -1))(implicit m: BSONDocumentReader[T], tag: ClassTag[T]): Future[Option[T]] = {
     exec(coll => {
       coll.find(findDoc, Option.empty[BSONDocument])
-        .sort(sortDoc)
-        .one[T]
+          .sort(sortDoc)
+          .one[T]
     })
   }
 
@@ -62,10 +54,10 @@ trait MongoExecutor[T] {
   def list(offset: Int, limit: Int, findDoc: BSONDocument, sortDoc: BSONDocument)(implicit m: BSONDocumentReader[T], tag: ClassTag[T]): Future[Vector[T]] = {
     exec(coll => {
       coll.find(findDoc, Option.empty[BSONDocument])
-        .sort(sortDoc)
-        .skip(offset)
-        .cursor[T](ReadPreference.primary).
-        collect[Vector](limit, Cursor.FailOnError[Vector[T]]())
+          .sort(sortDoc)
+          .skip(offset)
+          .cursor[T](ReadPreference.primary).
+          collect[Vector](limit, Cursor.FailOnError[Vector[T]]())
     })
   }
 
