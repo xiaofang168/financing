@@ -10,19 +10,20 @@ import scala.language.postfixOps
 object Config {
 
   val dbConfig: Task[DB] = {
+    ZIO.fromFuture(_ => fdbConfig)
+  }
 
+  val fdbConfig: Future[DB] = {
     val driver = AsyncDriver()
 
     val defaultStrategy = FailoverStrategy()
 
-    val db: Future[DB] = for {
+    for {
       uri <- MongoConnection.fromString("mongodb://mongosiud:mongo123$%^@127.0.0.1:27017/mydb")
       con <- driver.connect(uri)
       dn <- Future(uri.db.get)
       db <- con.database(dn, defaultStrategy)
     } yield db
-
-    ZIO.fromFuture(_ => db)
   }
 
 }
