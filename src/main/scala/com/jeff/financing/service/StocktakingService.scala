@@ -42,9 +42,7 @@ object ZStocktaking {
             super.update(id, u)
           }
         }
-      } yield {
-        out
-      }
+      } yield out
     }
 
     def find(): Task[Vector[StocktakingItem]] = {
