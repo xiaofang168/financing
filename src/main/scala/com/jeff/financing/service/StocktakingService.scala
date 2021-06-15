@@ -34,14 +34,13 @@ object ZStocktaking {
       val obj = get(id)
       for {
         result <- obj
-        out <- {
-          if (result.isEmpty) {
-            throw new RuntimeException("未找到盘点记录")
+        out <- result match {
+          case None => Task.fail(new RuntimeException("未找到盘点记录"))
+          case Some(obj) => {
+            val date = str2Int(command.date)
+            val u = Stocktaking(obj._id, obj.targetId, date, command.amount, command.income, command.totalIncome, command.rate, command.comment, obj.createTime)
+            super.update(id, u)
           }
-          val obj = result.get
-          val date = str2Int(command.date)
-          val u = Stocktaking(obj._id, obj.targetId, date, command.amount, command.income, command.totalIncome, command.rate, command.comment, obj.createTime)
-          super.update(id, u)
         }
       } yield {
         out
