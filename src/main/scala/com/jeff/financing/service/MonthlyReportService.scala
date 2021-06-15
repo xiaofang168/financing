@@ -25,8 +25,8 @@ object ZMonthlyReport {
       for {
         r <- super.findOne(document("date" -> date))
         res <- r match {
-          case None => ZIO.fail(new RuntimeException(s"$date 详情不存在"))
-          case Some(p) => ZIO.succeed(convert(p))
+          case None => Task.fail(new RuntimeException(s"$date 详情不存在"))
+          case Some(p) => Task.succeed(convert(p))
         }
       } yield res
     }
