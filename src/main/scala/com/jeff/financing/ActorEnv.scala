@@ -17,8 +17,7 @@ object ActorEnv {
 
 trait ActorEnvLive extends ActorEnv {
   // once instance, but not description. If wrapped in task will be evaluated each time (call by name)
-  private val system = ActorSystem("ZIO" + System.currentTimeMillis())
-
+  private val system = ActorSystem("financing-system")
   val dependencies = new ActorEnv.Service {
     override def getActorSystem: Task[ActorSystem] = Task(system)
   }
