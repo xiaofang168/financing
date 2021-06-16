@@ -5,6 +5,7 @@ import zio.{Task, ZIO}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import scala.concurrent.duration._
 import scala.language.postfixOps
 
 object Config {
@@ -25,5 +26,11 @@ object Config {
       db <- con.database(dn, defaultStrategy)
     } yield db
   }
+
+  val customStrategy = FailoverStrategy(
+    initialDelay = 500 milliseconds,
+    retries = 5,
+    delayFactor = attemptNumber => 1 + attemptNumber * 0.5
+  )
 
 }

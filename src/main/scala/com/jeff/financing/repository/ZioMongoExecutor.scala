@@ -9,7 +9,6 @@ import zio.{Task, ZIO}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-import scala.concurrent.duration._
 import scala.language.postfixOps
 import scala.reflect.ClassTag
 
@@ -31,16 +30,11 @@ trait ZioMongoExecutor[T] {
   protected def exec[A](fn: BSONCollection => Future[A])(implicit tag: ClassTag[T]): Task[A] = {
     val persistence: Persistence = tag.runtimeClass.getAnnotation(classOf[Persistence])
     val collName = persistence.collName()
-    val customStrategy = FailoverStrategy(
-      initialDelay = 500 milliseconds,
-      retries = 5,
-      delayFactor = attemptNumber => 1 + attemptNumber * 0.5
-    )
     ZIO.accessM[Future[DB]](e => {
       ZIO.fromFuture(_ => {
         for {
           db <- e
-          r <- fn(db.collection(collName, customStrategy))
+          r <- fn(db.collection(collName, Config.customStrategy))
         } yield r
       })
     }).provide(Config.fdbConfig)
