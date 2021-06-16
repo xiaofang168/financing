@@ -20,7 +20,7 @@ object Config {
     val defaultStrategy = FailoverStrategy()
 
     for {
-      uri <- MongoConnection.fromString("mongodb://mongosiud:mongo123$%^@127.0.0.1:27017/mydb")
+      uri <- MongoConnection.fromString("mongodb://mongosiud:mongo123$%^@127.0.0.1:27017/mydb?rm.tcpNoDelay=true&rm.keepAlive=true")
       con <- driver.connect(uri)
       dn <- Future(uri.db.get)
       db <- con.database(dn, defaultStrategy)
