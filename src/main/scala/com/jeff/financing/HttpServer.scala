@@ -5,6 +5,7 @@ import akka.http.scaladsl.Http
 import akka.util.Timeout
 import ch.qos.logback.classic.LoggerContext
 import ch.qos.logback.classic.joran.JoranConfigurator
+import com.jeff.financing.ActorEnv.ActorEnv
 import org.slf4j.{Logger, LoggerFactory}
 import zio.{Task, ZIO, _}
 
@@ -28,10 +29,10 @@ object HttpServer extends zio.App {
     (for {
       _ <- Config.dbConfig.fold(f => logger.info(s"db failed to connect ${f.getMessage}"),
         s => logger.info(s"db connected $s"))
-      systemT <- ZIO.access[ActorEnv](_.dependencies.getActorSystem)
-      b <- systemT.flatMap { s => bindTask(s) }
+      systemT <- ZIO.accessM[ActorEnv](_.get.getActorSystem)
+      b <- bindTask(systemT)
     } yield b
-      ).provide(ActorEnvLive)
+      ).provideLayer(ActorEnv.live)
 
   override def run(args: List[String]): URIO[ZEnv, ExitCode] = {
     // setting logback
