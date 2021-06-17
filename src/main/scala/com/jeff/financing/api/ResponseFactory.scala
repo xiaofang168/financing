@@ -5,6 +5,7 @@ import akka.http.scaladsl.model.StatusCodes.InternalServerError
 import akka.http.scaladsl.server.Directives.{onComplete, _}
 import akka.http.scaladsl.server._
 import com.jeff.financing.dto.JsonResult
+import org.slf4j.LoggerFactory
 import zio.{BootstrapRuntime, Task}
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -12,6 +13,8 @@ import scala.concurrent.{Future, Promise}
 import scala.util.{Failure, Success}
 
 trait ResponseFactory extends BootstrapRuntime {
+
+  private val logger = LoggerFactory.getLogger(classOf[ResponseFactory])
 
   final case class Result[T](data: T)
 
@@ -22,6 +25,7 @@ trait ResponseFactory extends BootstrapRuntime {
         complete(result)
       case Failure(e) ⇒
         import com.jeff.financing.dto.ZioSupport.JsonResultSupport._
+        logger.error(e.getMessage, e)
         complete(ToResponseMarshallable(InternalServerError → JsonResult(e.getMessage)))
     }
   }
