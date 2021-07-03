@@ -23,6 +23,11 @@ object PlatformEnum extends Enumeration {
   FUND,
 
   /**
+   * 工银瑞信
+   */
+  ICBCCS,
+
+  /**
    * 腾讯
    */
   TENCENT,
@@ -62,6 +67,7 @@ object PlatformEnum extends Enumeration {
       case JQKA => "同花顺"
       case ALI => "阿里"
       case FUND => "天天基金"
+      case ICBCCS => "工银瑞信"
       case TENCENT => "腾讯"
       case WE_BLANK => "微众银行"
       case BAIDU => "百度"
