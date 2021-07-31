@@ -34,7 +34,9 @@ object ZFlow {
         r <- task
         a <- {
           val targetIds = r.map(e => e._id.get.stringify)
-          stocktakingService.aggregate(document("targetId" -> document("$in" -> targetIds)))
+          // 获取当前月
+          val date = DateTime.now().toString("yyyyMM").toInt
+          stocktakingService.aggregate(document("targetId" -> document("$in" -> targetIds), "date" -> date))
         }
       } yield {
         handles(r, a)
