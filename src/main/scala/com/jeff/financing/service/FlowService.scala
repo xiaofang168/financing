@@ -109,7 +109,7 @@ object ZFlow {
       // 盘点日期和金额
       val stocktakingDateAmount: (String, BigDecimal) = stocktaking match {
         case Some(e) => (new DateTime(e.createTime).toString("yyyy-MM-dd"), e.amount)
-        case None => ("未盘点过", flow.amount)
+        case None => ("未盘点过", if (flow.state == 1) flow.amount else 0)
       }
 
       FlowItem(flow._id.get.stringify, flow.platform.toString, PlatformEnum.getDesc(flow.platform),
