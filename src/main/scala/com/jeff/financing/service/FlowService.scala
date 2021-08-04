@@ -127,6 +127,9 @@ object ZFlow {
 
   }
 
+  /**
+   * ZLayer.fromService注入stocktakingService依赖
+   */
   val live: ZLayer[ZStocktakingEnv, Nothing, ZFlowEnv] = ZLayer.fromService[ZStocktaking.Service, ZFlow.Service] {
     stocktakingService => new Service(stocktakingService)
   }
