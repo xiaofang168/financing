@@ -12,28 +12,6 @@ import scala.concurrent.Future
 import scala.language.postfixOps
 import scala.reflect.ClassTag
 
-object ZioMongoExecutor {
-
-  trait Service[T] {
-    def create(t: T)(implicit m: BSONDocumentWriter[T], tag: ClassTag[T]): Task[Boolean]
-
-    def get(id: String)(implicit m: BSONDocumentReader[T], tag: ClassTag[T]): Task[Option[T]]
-
-    def findOne(findDoc: BSONDocument, sortDoc: BSONDocument = document("_id" -> -1))(implicit m: BSONDocumentReader[T], tag: ClassTag[T]): Task[Option[T]]
-
-    def findOne(findDoc: BSONDocument)(implicit m: BSONDocumentReader[T], tag: ClassTag[T]): Task[Option[T]]
-
-    def list(offset: Int, limit: Int, sortDoc: BSONDocument)(implicit m: BSONDocumentReader[T], tag: ClassTag[T]): Task[Vector[T]]
-
-    def list(offset: Int, limit: Int, findDoc: BSONDocument, sortDoc: BSONDocument)(implicit m: BSONDocumentReader[T], tag: ClassTag[T]): Task[Vector[T]]
-
-    def update(id: String, t: T)(implicit m: BSONDocumentWriter[T], tag: ClassTag[T]): Task[Int]
-
-    def delete(id: String)(implicit m: BSONDocumentWriter[T], tag: ClassTag[T]): Task[Int]
-  }
-
-}
-
 trait ZioMongoExecutor[T] {
 
   def create(t: T)(implicit m: BSONDocumentWriter[T], tag: ClassTag[T]): Task[Boolean] = {
