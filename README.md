@@ -7,7 +7,10 @@
    - Traverse
 - chimney对象copy
 - akka http
+- circe
 - reactiveMongo
+- zio
+	- ZLayer
 
 ## maven打可运行jar包
 ```
